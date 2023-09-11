@@ -1,5 +1,7 @@
-
-
+class virtualMachine:
+    pass
+class slice:
+    pass
 
 if __name__ == "__main__":    
     print("Welcome to the Cloud Service: CGC (The Cloud Gods Carry)")
