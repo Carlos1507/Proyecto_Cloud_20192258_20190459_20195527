@@ -10,7 +10,7 @@ class user:
 
 # Definición de los módulos a implementar:
 def autorizacion():
-    pass
+    print(password.get(), username.get())
 
 # Definición de funciones adicionales a implementar:
 def conexionBD():
