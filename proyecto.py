@@ -37,7 +37,6 @@ class APIServ(object):
         return ret
 
 # Definición de los módulos a implementar:
-a = APIServ("127.0.0.1")
 def autorizacion():
     user = input("Usuario: ")
     passw = input("Contraseña: ")
