@@ -21,13 +21,10 @@ con.connect(function(err) {
 var port = process.env.PORT || 3000
 
 app.get("/imprimir", (req, res) => {
-    con.connect(function(err) {
-        if (err) throw err;
-        con.query("SELECT * FROM persona", function(err,result, fields){
-            if(err) throw err;
-            console.log(result);
-            res.send(result);
-        });
+    con.query("SELECT * FROM persona", function(err,result, fields){
+        if(err) throw err;
+        console.log(result);
+        res.send(result);
     });
 })
 
