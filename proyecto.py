@@ -10,8 +10,14 @@ class virtualMachine:
     pass
 class slice:
     pass
-class user:
-    pass
+class User:
+    def __init__(self, nombre, username, correo, rol, eligioAZs):
+        self.nombre = nombre
+        self.username = username
+        self.correo = correo
+        self.rol = rol
+        self.eligioAZs = eligioAZs
+        
 # Conexión WebService NodeJS
 endpoint="http://127.0.0.1:3000/"
 class APIServ(object):
@@ -49,7 +55,8 @@ def autorizacion():
   #  resultado = pusher.getReq("imprimir")
   #  valido = pusher.postReq("validarPOST", {"user": user, "password": passw})
     if(user == "diego" and passw =="root"):
-        return True
+        usuarioLog = User("Diego Zuasnabar",user, "diego@gmail.com","Usuario",0)
+        return usuarioLog
     else:
         print("Credenciales incorrectas")
         autorizacion()
@@ -109,9 +116,7 @@ if __name__ == "__main__":
     pusher = APIServ("127.0.0.1")
     print("Welcome to the Cloud Service: CCG (The Cloud Computing Gods)")
     print("Please enter your credentials to log in to the system: ")
-    valido = autorizacion()
+    usuarioLog = autorizacion()
+    print(f"Bienvenido {usuarioLog.nombre}")
     opcionPlataforma = seleccionarPlataforma()
     opcion = menu()
-
-
-a = "variable"
