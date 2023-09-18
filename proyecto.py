@@ -3,6 +3,7 @@ import http.client as httplib
 import json
 import time
 import getpass
+import sys
 # Variables globales
 global usuarioLog
 
@@ -57,14 +58,17 @@ def autorizacion():
     try:
         passw = getpass.getpass("Contraseña: ")
     except Exception as err:
-        print("Error: " + err)    
+        print("Error: " + err)
     print("Validando...")
     time.sleep(2)
   #  resultado = pusher.getReq("imprimir")
     usuarioBD = pusher.postReq("validarPOST", {"username": username, "password": passw})[2]
     if(len(usuarioBD) != 0):
         usuarioBD = usuarioBD[0]
-        usuarioLog = User(usuarioBD['nombres']+" "+usuarioBD['apellidos'],usuarioBD['username'],usuarioBD['correo'],"Usuario",0)
+        if(usuarioBD['username']=="diego123"):
+            usuarioLog = User(usuarioBD['nombres']+" "+usuarioBD['apellidos'],usuarioBD['username'],usuarioBD['correo'],"Usuario",0)
+        else:
+            usuarioLog = User(usuarioBD['nombres']+" "+usuarioBD['apellidos'],usuarioBD['username'],usuarioBD['correo'],"Administrador",0)
         return usuarioLog
     else:
         print("Credenciales incorrectas")
@@ -72,22 +76,82 @@ def autorizacion():
 # Funciones del menú
 # Crear Slice
 def topologiaPredeterminada():
-    print("Seleccione el tipo de topología: \n\t1. Malla\n\t2. Árbol\n\t3. Anillo\n\t4. Lineal")
-def topologiaPersonalizada():
-    pass
-def crearSlice():
-    print("Tipo de topología:\n\t1. Predeterminado\n\t2. Personalizado")
-    topologia = input("\tOpción: ")
-    if(topologia == "1"):
-        topologiaPredeterminada()
-    elif(topologia == "2"):
-        topologiaPersonalizada()
-    else:
-        print("--- Elija una opción válida ---")
+    print("Seleccione el tipo de topología: \n\t1. Malla\n\t2. Árbol\n\t3. Anillo\n\t4. Lineal\n\t5. Salir")
+    opcion=input("Opción: ")
+    if(opcion=="1"):
+        pass
+    elif(opcion=="2"):
+        pass
+    elif(opcion=="3"):
+        pass
+    elif(opcion=="4"):
+        pass
+    elif(opcion=="5"):
         crearSlice()
+    else:
+        topologiaPredeterminada()
+def topologiaPersonalizada():
+    numberVMs = input("Indique el número de VMs a crear: ")
+
+def crearSlice():
+    if(usuarioLog.eligioAZs==1):
+        print("Tipo de topología:\n\t1. Predeterminado\n\t2. Personalizado\n\t3. Salir")
+        topologia = input("\tOpción: ")
+        if(topologia == "1"):
+            topologiaPredeterminada()
+        elif(topologia == "2"):
+            topologiaPersonalizada()
+        elif(topologia == "3"):
+            menu()
+        else:
+            print("--- Elija una opción válida ---")
+            crearSlice()
+    else:
+        zonasDisponibilidad()
 # Listar Slice
 def listarSlice():
-    pass
+    if(usuarioLog.rol=="Usuario"):
+        ListasAlumnos = [['1', 'Prueba', "11/07/2023", 4, 5, "Si"], 
+                 ['2', 'Entorno1', "19/07/2023", 8, 9, "No"],
+                 ['3', 'Simulación', "4/08/2023", 6, 10, "Si"]]
+        Tabla = """
+        +----------------------- Slices personales creados ---------------------+
+        +-----------------------------------------------------------------------+
+        | N°   Nombre        Fecha        Número VMs  Número Enlaces    Activo  |
+        |-----------------------------------------------------------------------|
+        {}
+        +-----------------------------------------------------------------------+
+        """
+        formatted_rows = []
+        for i, fila in enumerate(ListasAlumnos):
+            if i == 0:
+                formatted_rows.append("| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
+            else:
+                formatted_rows.append("\t| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
+        Tabla = Tabla.format('\n'.join(formatted_rows))
+        print(Tabla)
+    else:
+        ListasAlumnos = [['1', 'Prueba', "11/07/2023", 4, 5, "Si"], 
+                         ['2','VNRT',"7/04/2023",10,20,"Si"], 
+                         ['3','Exogeni',"2/01/2023",15,20,"Si"], 
+                 ['4', 'Entorno1', "19/07/2023", 8, 9, "No"],
+                 ['5', 'Simulación', "4/08/2023", 6, 10, "Si"]]
+        Tabla = """
+        +---------------------- Todos los Slices existentes --------------------+
+        +-----------------------------------------------------------------------+
+        | N°   Nombre        Fecha        Número VMs  Número Enlaces    Activo  |
+        |-----------------------------------------------------------------------|
+        {}
+        +-----------------------------------------------------------------------+
+        """
+        formatted_rows = []
+        for i, fila in enumerate(ListasAlumnos):
+            if i == 0:
+                formatted_rows.append("| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
+            else:
+                formatted_rows.append("\t| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
+        Tabla = Tabla.format('\n'.join(formatted_rows))
+        print(Tabla)
 # Definir zonas de disponibilidad
 def zonasDisponibilidad():
     if (usuarioLog.eligioAZs == 0):
@@ -126,13 +190,18 @@ def menu():
     print("1. Crear Slice")
     print("2. Listar Slices")
     print("3. Definir zona de disponibilidad")
+    print("4. Cerrar Sesión")
     opcion = input("Seleccione una opción: ")
     if(opcion =="1"):
         crearSlice()
     elif(opcion =="2"):
         listarSlice()
     elif(opcion =="3"):
-        zonasDisponibilidad()        
+        zonasDisponibilidad()       
+    elif(opcion =="4"):
+        usuarioLog = None
+        print("*** Muchas gracias por usar nuestro sistema ***")
+        sys.exit(0)
     else:
         print("--- Elija una opción válida ---")
         menu()
