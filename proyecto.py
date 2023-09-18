@@ -6,7 +6,9 @@ import getpass
 import sys
 # Variables globales
 global usuarioLog
-
+global imagenes 
+longitudLinea = 30
+imagenesNombres = ["cirros-image.img", "ubuntu-iso-20.04.iso"]
 headers = {'Content-type': 'application/json; charset=utf-8'}
 # Definición de las clases a implementar (elementos):
 class virtualMachine:
@@ -77,22 +79,31 @@ def autorizacion():
 # Crear Slice
 def topologiaPredeterminada():
     print("Seleccione el tipo de topología: \n\t1. Malla\n\t2. Árbol\n\t3. Anillo\n\t4. Lineal\n\t5. Salir")
-    opcion=input("Opción: ")
+    opcion=input("\t**Opción: ")
     if(opcion=="1"):
-        pass
+        eleccionAZ()
     elif(opcion=="2"):
-        pass
+        eleccionAZ()
     elif(opcion=="3"):
-        pass
+        eleccionAZ()
     elif(opcion=="4"):
-        pass
+        eleccionAZ()
     elif(opcion=="5"):
         crearSlice()
     else:
         topologiaPredeterminada()
 def topologiaPersonalizada():
-    numberVMs = input("Indique el número de VMs a crear: ")
+    while(True):
+        print("1. Añadir máquina virtual (VM)")
+        print("2. Añadir enlace")
 
+
+def eleccionAZ():
+    print("--- AZ elegida: ---")
+    print(usuarioLog.eleccionAZs)
+    az= input("Seleccione el AZ para desplegar el slice")
+    print("--- Despliegue exitoso ---")
+    menu()
 def crearSlice():
     if(usuarioLog.eligioAZs==1):
         print("Tipo de topología:\n\t1. Predeterminado\n\t2. Personalizado\n\t3. Salir")
@@ -160,7 +171,7 @@ def zonasDisponibilidad():
         print("Opción 1: \n\tAZ1: Worker1\tAZ2:Worker2\tAZ3:Worker3")
         print("Opción 2: \n\tAZ1: Worker1 & Worker2\tAZ2:Worker3")
         print("Opción 3: \n\tAZ1: Worker1 & Worker2 & Worker3")
-        opcion = input("Opción: ")
+        opcion = input("\t**Opción: ")
         if (opcion == "1"):
             usuarioLog.eligioAZs = 1
             usuarioLog.eleccionAZs = "AZ1: Worker1\tAZ2:Worker2\tAZ3:Worker3"
@@ -183,6 +194,47 @@ def zonasDisponibilidad():
         print("--- La zona ya ha sido seleccionada ---")
         print(usuarioLog.eleccionAZs)
         menu()
+def agregarImagenes():
+    filename = input("Seleccionar archivo: ")
+    imagenesNombres.append(filename)
+    print("-"*longitudLinea)
+    menu()
+def listarImagenes():
+    for i in range(1,len(imagenesNombres)+1):
+        print(str(i)+". "+imagenesNombres[i-1])
+    print("-"*longitudLinea)
+    borrarImagenes =input("¿Borrar imágenes? (S/N): ")
+    if(borrarImagenes=="S" or borrarImagenes=="s"):
+        numImagen = input("Seleccione el número de imagen a borrar: ")
+        try:
+            numImagen = int(numImagen)
+            if(numImagen>0 and numImagen<=len(imagenesNombres)):
+                imagenesNombres.remove(imagenesNombres[numImagen-1])
+                print("Imagen eliminada exitosamente")
+                imagenes()
+            else:
+                print(numImagen)
+        except Exception as err:
+            print("Error: " + err)
+            print("Debe seleccionar un número válido")
+            imagenes()
+        finally:
+            print("Error")
+
+def imagenes():
+    print("1. Agregar imagen")
+    print("2. Listar imágenes")
+    print("3. Salir")
+    opcion = input("\t**Opción: ")
+    if(opcion =="1"):
+        agregarImagenes()
+    elif(opcion =="2"):
+        listarImagenes()
+    elif(opcion=="3"):
+        menu()
+    else:
+        print("--- Elija una acción válida ---")
+        imagenes()
 # Definición de funciones adicionales a implementar:
 def menu():
     opcion = ""
@@ -190,15 +242,18 @@ def menu():
     print("1. Crear Slice")
     print("2. Listar Slices")
     print("3. Definir zona de disponibilidad")
-    print("4. Cerrar Sesión")
-    opcion = input("Seleccione una opción: ")
+    print("4. Imágenes")
+    print("5. Cerrar Sesión")
+    opcion = input("\t**Seleccione una opción: ")
     if(opcion =="1"):
         crearSlice()
     elif(opcion =="2"):
         listarSlice()
     elif(opcion =="3"):
-        zonasDisponibilidad()       
-    elif(opcion =="4"):
+        zonasDisponibilidad()     
+    elif(opcion == "4"):
+        imagenes()
+    elif(opcion =="5"):
         usuarioLog = None
         print("*** Muchas gracias por usar nuestro sistema ***")
         sys.exit(0)
@@ -207,7 +262,7 @@ def menu():
         menu()
 def seleccionarPlataforma():
     print("Seleccione la plataforma: \n\t1. Linux\t2. OpenStack")
-    opcionPlataforma = input("Opción: ")
+    opcionPlataforma = input("\t**Opción: ")
     if(opcionPlataforma =="1" or opcionPlataforma=="2"):
         return opcionPlataforma
     else:
