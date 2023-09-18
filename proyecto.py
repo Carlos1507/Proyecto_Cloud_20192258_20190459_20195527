@@ -77,6 +77,7 @@ def crearSlice():
     elif(topologia == "2"):
         topologiaPersonalizada()
     else:
+        print("--- Elija una opción válida ---")
         crearSlice()
 # Listar Slice
 def listarSlice():
@@ -127,6 +128,7 @@ def menu():
     elif(opcion =="3"):
         zonasDisponibilidad()        
     else:
+        print("--- Elija una opción válida ---")
         menu()
 def seleccionarPlataforma():
     print("Select the platform: \n\t1. Linux\t2. OpenStack")
@@ -134,6 +136,7 @@ def seleccionarPlataforma():
     if(opcionPlataforma =="1" or opcionPlataforma=="2"):
         return opcionPlataforma
     else:
+        print("--- Elija una opción válida ---")
         seleccionarPlataforma()
 # Función principal
 if __name__ == "__main__":    
