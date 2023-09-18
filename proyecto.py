@@ -61,7 +61,7 @@ def topologiaPersonalizada():
     pass
 def crearSlice():
     print("Tipo de topología:\n\t1. Predeterminado\n\t2. Personalizado")
-    topologia = input("Opción: ")
+    topologia = input("\tOpción: ")
     if(topologia == "1"):
         topologiaPredeterminada()
     elif(topologia == "2"):
@@ -73,7 +73,11 @@ def listarSlice():
     pass
 # Definir zonas de disponibilidad
 def zonasDisponibilidad():
-    pass
+    print("Seleccione la configuación de zonas de disponibilidad")
+    print("Opción 1: \n\tAZ1: Worker1\tAZ2:Worker2\tAZ3:Worker3")
+    print("Opción 2: \n\tAZ1: Worker1 & Worker2\tAZ2:Worker3")
+    print("Opción 3: \n\tAZ1: Worker1 & Worker2 & Worker3")
+    
 
 # Definición de funciones adicionales a implementar:
 def menu():
