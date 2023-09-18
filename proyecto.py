@@ -3,6 +3,8 @@ import http.client as httplib
 import json
 import time
 import getpass
+# Variables globales
+global usuarioLog
 
 headers = {'Content-type': 'application/json'}
 # Definición de las clases a implementar (elementos):
@@ -11,12 +13,13 @@ class virtualMachine:
 class slice:
     pass
 class User:
-    def __init__(self, nombre, username, correo, rol, eligioAZs):
+    def __init__(self, nombre, username, correo, rol, eligioAZs=0, eleccionAZs=""):
         self.nombre = nombre
         self.username = username
         self.correo = correo
         self.rol = rol
         self.eligioAZs = eligioAZs
+        self.eleccionAZs = eleccionAZs
         
 # Conexión WebService NodeJS
 endpoint="http://127.0.0.1:3000/"
@@ -80,12 +83,35 @@ def listarSlice():
     pass
 # Definir zonas de disponibilidad
 def zonasDisponibilidad():
-    print("Seleccione la configuación de zonas de disponibilidad")
-    print("Opción 1: \n\tAZ1: Worker1\tAZ2:Worker2\tAZ3:Worker3")
-    print("Opción 2: \n\tAZ1: Worker1 & Worker2\tAZ2:Worker3")
-    print("Opción 3: \n\tAZ1: Worker1 & Worker2 & Worker3")
-    
-
+    if (usuarioLog.eligioAZs == 0):
+        print("Seleccione la configuación de zonas de disponibilidad")
+        print("*** Esta acción solo se puede realizar 1 sola vez ***")
+        print("Opción 1: \n\tAZ1: Worker1\tAZ2:Worker2\tAZ3:Worker3")
+        print("Opción 2: \n\tAZ1: Worker1 & Worker2\tAZ2:Worker3")
+        print("Opción 3: \n\tAZ1: Worker1 & Worker2 & Worker3")
+        opcion = input("Opción: ")
+        if (opcion == "1"):
+            usuarioLog.eligioAZs = 1
+            usuarioLog.eleccionAZs = "AZ1: Worker1\tAZ2:Worker2\tAZ3:Worker3"
+            print("--------------------------------------")
+            menu()
+        elif (opcion == "2"):
+            usuarioLog.eligioAZs = 1
+            usuarioLog.eleccionAZs = "AZ1: Worker1 & Worker2\tAZ2:Worker3"
+            print("--------------------------------------")
+            menu()
+        elif (opcion == "3"):
+            usuarioLog.eligioAZs = 1
+            usuarioLog.eleccionAZs = "AZ1: Worker1 & Worker2 & Worker3"
+            print("--------------------------------------")
+            menu()
+        else:
+            print("--- Elija una acción válida ---")
+            zonasDisponibilidad()
+    else:
+        print("--- La zona ya ha sido seleccionada ---")
+        print(usuarioLog.eleccionAZs)
+        menu()
 # Definición de funciones adicionales a implementar:
 def menu():
     opcion = ""
@@ -103,9 +129,7 @@ def menu():
     else:
         menu()
 def seleccionarPlataforma():
-    print("Select the platform: ")
-    print("1. Linux")
-    print("2. OpenStack")
+    print("Select the platform: \n\t1. Linux\t2. OpenStack")
     opcionPlataforma = input("Option: ")
     if(opcionPlataforma =="1" or opcionPlataforma=="2"):
         return opcionPlataforma
