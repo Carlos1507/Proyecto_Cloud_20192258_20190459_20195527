@@ -112,3 +112,6 @@ if __name__ == "__main__":
     valido = autorizacion()
     opcionPlataforma = seleccionarPlataforma()
     opcion = menu()
+
+
+a = "variable"
