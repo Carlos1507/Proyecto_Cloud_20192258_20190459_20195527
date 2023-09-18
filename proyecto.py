@@ -6,7 +6,7 @@ import getpass
 # Variables globales
 global usuarioLog
 
-headers = {'Content-type': 'application/json'}
+headers = {'Content-type': 'application/json; charset=utf-8'}
 # Definición de las clases a implementar (elementos):
 class virtualMachine:
     pass
@@ -28,26 +28,31 @@ class APIServ(object):
         self.server = server
     def postReq(self, subruta, data):
         ret = self.rest_call('POST', subruta, data)
-        return ret[0]==200
+        return ret
     def getReq(self, subruta):
         ret = self.rest_call('GET', subruta)
-        return ret[0]==200
+        return ret
     def rest_call(self, action, subruta, data=""):
         path = endpoint+subruta
         conn = httplib.HTTPConnection(self.server, 3000)
         if action == 'POST':
             body = json.dumps(data)
             conn.request(action, path, body, headers)
-        conn.request(action, path, "", headers)
+        elif action == 'GET':
+            conn.request(action, path, "", headers)
         response = conn.getresponse()
-        ret = (response.status, response.reason, response.read())
-        print(ret)
+        status = response.status
+        reason = response.reason
+        content = json.loads(response.read().decode("utf-8"))
+      #  print(f"Status: {status} - {reason}")
+      #  print(f"Response Data: {content}")
+        ret = (response.status, response.reason, content)
         conn.close()
         return ret
 
 # Definición de los módulos a implementar:
 def autorizacion():
-    user = input("Usuario: ")
+    username = input("Usuario: ")
     passw = ""
     try:
         passw = getpass.getpass("Contraseña: ")
@@ -56,9 +61,10 @@ def autorizacion():
     print("Validando...")
     time.sleep(2)
   #  resultado = pusher.getReq("imprimir")
-  #  valido = pusher.postReq("validarPOST", {"user": user, "password": passw})
-    if(user == "diego" and passw =="root"):
-        usuarioLog = User("Diego Zuasnabar",user, "diego@gmail.com","Usuario",0)
+    usuarioBD = pusher.postReq("validarPOST", {"username": username, "password": passw})[2]
+    if(len(usuarioBD) != 0):
+        usuarioBD = usuarioBD[0]
+        usuarioLog = User(usuarioBD['nombres']+" "+usuarioBD['apellidos'],usuarioBD['username'],usuarioBD['correo'],"Usuario",0)
         return usuarioLog
     else:
         print("Credenciales incorrectas")
@@ -116,7 +122,7 @@ def zonasDisponibilidad():
 # Definición de funciones adicionales a implementar:
 def menu():
     opcion = ""
-    print("What would you like to do today?")
+    print("¿Qué acción desea hacer hoy?")
     print("1. Crear Slice")
     print("2. Listar Slices")
     print("3. Definir zona de disponibilidad")
@@ -131,8 +137,8 @@ def menu():
         print("--- Elija una opción válida ---")
         menu()
 def seleccionarPlataforma():
-    print("Select the platform: \n\t1. Linux\t2. OpenStack")
-    opcionPlataforma = input("Option: ")
+    print("Seleccione la plataforma: \n\t1. Linux\t2. OpenStack")
+    opcionPlataforma = input("Opción: ")
     if(opcionPlataforma =="1" or opcionPlataforma=="2"):
         return opcionPlataforma
     else:
@@ -141,8 +147,8 @@ def seleccionarPlataforma():
 # Función principal
 if __name__ == "__main__":    
     pusher = APIServ("127.0.0.1")
-    print("Welcome to the Cloud Service: CCG (The Cloud Computing Gods)")
-    print("Please enter your credentials to log in to the system: ")
+    print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
+    print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
     usuarioLog = autorizacion()
     print(f"Bienvenido {usuarioLog.nombre}")
     opcionPlataforma = seleccionarPlataforma()
