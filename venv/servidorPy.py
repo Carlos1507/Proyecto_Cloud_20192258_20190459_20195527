@@ -5,7 +5,6 @@ from pydantic import BaseModel
 import bcrypt
 import pymysql
 
-
 # Lado del cliente
 def hash_bcrypt(password):
     password_bytes = password.encode('utf-8')
@@ -17,14 +16,13 @@ def comprobar_hash_bcrypt(input_passwd, password_hashed):
         print("Contraseña correcta")
     else:
         print("Contraseña incorrectaaaaaa")
-def validar(uservalid):
-    mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="happyhierba", charset="utf8mb4")
-    handlermysql = mysqlConexion.cursor()
-    sql = "SELECT * FROM happyhierba.persona where (username= %s and contrasenia= %s)"
-    handlermysql.execute(sql, (uservalid.username, uservalid.password))
-    print(handlermysql.fetchall())
-    mysqlConexion.close()
 
+def ejecutarConsultaSQL(sql, params):
+    mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
+    handlermysql = mysqlConexion.cursor()
+    handlermysql.execute(sql, params)
+    mysqlConexion.close()
+    return handlermysql.fetchall()
 
 class Usuario(BaseModel):
     idUsuario: int
@@ -58,6 +56,8 @@ async def passwordEncoder(contrasenia:str):
 
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
-    print(uservalid)
-    validar(uservalid)
-    return {"result":"hello"}
+    result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
+    if (len(result)!=0):
+        return {"result": result[0]}
+    else:
+        return {"result":"Incorrecto"}

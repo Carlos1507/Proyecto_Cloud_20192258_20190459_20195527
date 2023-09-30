@@ -6,6 +6,8 @@ import json
 import time
 import sys
 import requests
+from colorama import Fore, Style, init
+init(autoreset=True)
 
 # Variables globales
 global usuarioLog
@@ -19,13 +21,12 @@ class virtualMachine:
 class slice:
     pass
 class User:
-    def __init__(self, nombre, username, correo, rol, eligioAZs=0, eleccionAZs=""):
-        self.nombre = nombre
+    def __init__(self, idUser, username, correo, rol, eligioAZs):
+        self.idUser = idUser
         self.username = username
         self.correo = correo
         self.rol = rol
         self.eligioAZs = eligioAZs
-        self.eleccionAZs = eleccionAZs
         
 # Conexión WebService NodeJS
 endpoint="http://127.0.0.1:8000/"
@@ -58,21 +59,29 @@ class APIServ(object):
 
 # Definición de los módulos a implementar:
 def autorizacion():
-    username = questionary.text("Usuario: ").ask()
-    passw = questionary.password("What's your secret?").ask()
-    print("Validando...")
-   # usuarioBD = pusher.postReq("validarPOST", json.dumps({"username": username, "password": passw}))[2]
-    usuarioBD = requests.post(url = "http://127.0.0.1:8000/validarPOST", headers = {"Content-Type": "application/json"}, data= json.dumps({"username": username, "password": passw}))
-    if(len(usuarioBD) != 0):
-        usuarioBD = usuarioBD[0]
-        if(usuarioBD['username']=="diego123"):
-            usuarioLog = User(usuarioBD['nombres']+" "+usuarioBD['apellidos'],usuarioBD['username'],usuarioBD['correo'],"Usuario",0)
+    username = questionary.text("Usuario: [digite 0 aquí para salir]").ask()
+    if(username!="0"):
+        passw = questionary.password("Contraseña: ").ask()
+        print("Validando...")
+        response = requests.post(url = "http://127.0.0.1:8000/validarPOST", 
+                                headers = {"Content-Type": "application/json"}, 
+                                data= json.dumps({"username": username, "password": passw}))
+        if(response.status_code == 200):
+            usuarioBD = dict(response.json())
+            if (usuarioBD['result'] == "Incorrecto"):
+                print(Fore.RED + "Credenciales incorrectas")
+                autorizacion()
+            else:    
+                print(Fore.GREEN + "Logueo exitoso")   
+                usuarioLog = User(usuarioBD['result'][0], usuarioBD['result'][1], usuarioBD['result'][3], 
+                                  usuarioBD['result'][5], usuarioBD['result'][4])
+            return usuarioLog
         else:
-            usuarioLog = User(usuarioBD['nombres']+" "+usuarioBD['apellidos'],usuarioBD['username'],usuarioBD['correo'],"Administrador",0)
-        return usuarioLog
+            print("Error de autenticación")
+            autorizacion()
     else:
-        print("Credenciales incorrectas")
-        autorizacion()
+        sys.exit(0)
+        
 # Funciones del menú
 # Crear Slice
 def topologiaPredeterminada():
@@ -259,9 +268,7 @@ def menu():
         print("--- Elija una opción válida ---")
         menu()
 def seleccionarPlataforma():
-    opcionPlataforma = questionary.select(
-    "Seleccione la plataforma:",
-    choices=["1. Linux", "2. OpenStack"],).ask()
+    opcionPlataforma = questionary.select("Seleccione la plataforma:", choices=["1. Linux", "2. OpenStack"]).ask()
     if(opcionPlataforma =="1. Linux" or opcionPlataforma=="2. OpenStack"):
         return opcionPlataforma
     else:
@@ -273,6 +280,6 @@ if __name__ == "__main__":
     print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
     print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
     usuarioLog = autorizacion()
-    print(f"Bienvenido {usuarioLog.nombre}")
+    print(Fore.CYAN+f"  Bienvenido {usuarioLog.username}")
     opcionPlataforma = seleccionarPlataforma()
     opcion = menu()
