@@ -9,7 +9,7 @@ init(autoreset=True)
 # Variables globales
 global usuarioLog
 global imagenes 
- 
+
 # Definición de los módulos a implementar:
 # Crear Slice
 def topologiaPredeterminada():

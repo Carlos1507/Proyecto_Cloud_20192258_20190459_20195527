@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from typing import Optional
 from pydantic import BaseModel
-import pymysql
+import pymysql, random
 
 listaSlicesGeneral = [["Prueba", "11/07/2023", "4", "5", "Si"],
                       ["VNRT","7/04/2023","10","20","Si"],
@@ -71,6 +71,12 @@ async def allUsers():
 @app.get("/allSlices")
 async def allSlices():
     return {"result": listaSlicesGeneral}
+
+@app.get("/slicesUser/{idUser}")
+async def allSlicesUser(idUser: int):
+    num_slices = random.randint(1, len(listaSlicesGeneral))
+    slicesUser = random.sample(listaSlicesGeneral, num_slices)
+    return {"result": slicesUser}
 
 @app.get("/eliminarUsuario/{idUser}")
 async def eliminarUsuarios(idUser: int):

@@ -2,6 +2,7 @@ import questionary
 from gestionUsuariosOperador import gestionarUsuarios as gestionUsuarios
 from gestionSlicesOperador import gestionarSlices as gestionSlices
 from gestionImagenes import gestorImagenes as gestionImagenes
+from gestionSlicesUsuario import gestionarSlicesUsuario as gestionSlicesUsuario
 
 def menu(usuarioLog):
     if(usuarioLog.rol==1):    # ACCIONES OPERADOR
@@ -36,7 +37,10 @@ def menuUsuario(usuarioLog, opcion):
     if(opcion=="1. Crear Slice"):
         pass
     elif(opcion=="2. Listar Slices"):
-        pass
+        while True:
+            opt = gestionSlicesUsuario(usuarioLog)
+            if opt==None:
+                break
     elif(opcion=="3. Definir zona de disponibilidad"):
         pass
     else:
