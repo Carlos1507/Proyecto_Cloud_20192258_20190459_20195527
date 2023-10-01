@@ -50,5 +50,4 @@ async def validate_password(uservalid: UserValidation):
 async def allUsers():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())
     listaUsuarios = [list(tupla) for tupla in result]
-    print(type(listaUsuarios), listaUsuarios)
     return {"result": listaUsuarios}
