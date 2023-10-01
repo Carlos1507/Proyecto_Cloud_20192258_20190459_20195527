@@ -2,10 +2,55 @@ import requests
 from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
+import questionary
 
 console = Console()
 
 def gestionarUsuarios(usuario):
+    opcionesSubMenuUsuarios = ["1. Crear Usuario", "2. Visualizar Usuarios", "3. Eliminar Usuario","4. Regresar"]
+    opcion = questionary.select("Submenú Gestión de Usuarios: ", choices=opcionesSubMenuUsuarios).ask()
+    if(opcion =="4. Regresar"):
+        return
+    else:
+        if(opcion == "1. Crear Usuario"):
+            crearUsuario(usuario)
+        elif(opcion == "2. Visualizar Usuarios"):
+            listarAllUsers(usuario)
+        elif(opcion == "3. Eliminar Usuario"):
+            eliminarUsuario(usuario)
+    
+def crearUsuario():
+    pass
+
+def eliminarUsuario(usuario):
+    response = requests.get(url = "http://127.0.0.1:8000/allUsers", 
+                                headers = {"Content-Type": "application/json"})
+    if(response.status_code == 200):
+        usuarios = response.json()['result']
+        print(Fore.CYAN+"* Lista de Usuarios existentes")
+        listaUsuarios = []
+        for i in range(0, len(usuarios)):
+            if(usuarios[i][1] == usuario.username):
+                continue
+            else:
+                listaUsuarios.append(usuarios[i][1])
+        listaUsuarios.append("* Regresar")
+        usuarioEliminar = questionary.rawselect("Elija un usuario a eliminar: (O seleccione la última opción para volver)", choices=listaUsuarios).ask()
+        if(usuarioEliminar=="* Regresar"):
+            gestionarUsuarios(usuario)
+        idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
+        resultadoEliminar = requests.get(url = "http://127.0.0.1:8000/eliminarUsuario/"+str(idEliminar), 
+                                         headers = {"Content-Type": "application/json"})
+        if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
+            print(Fore.GREEN+"Usuario Eliminado Correctamente")
+        else:
+            print(Fore.RED+"Hubo un problema al eliminar, intente nuevamente")
+    else:
+        print(Fore.RED+"Error en el servidor")
+        gestionarUsuarios(usuario)
+
+
+def listarAllUsers(usuario):
     response = requests.get(url = "http://127.0.0.1:8000/allUsers", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
@@ -19,5 +64,7 @@ def gestionarUsuarios(usuario):
         for user in usuarios:
             table.add_row(str(user[0]), user[1], user[2], "Si" if user[3]==1 else "No", "Usuario" if user[4]==2 else "Operador")
         console.print(table)
+        gestionarUsuarios(usuario)
     else:
         print(Fore.RED + "Error en el servidor")
+        gestionarUsuarios(usuario)

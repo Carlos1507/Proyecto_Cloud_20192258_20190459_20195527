@@ -9,15 +9,29 @@ def ejecutarConsultaSQL(sql, params):
     handlermysql = mysqlConexion.cursor()
     handlermysql.execute(sql, params)
     mysqlConexion.close()
-    return handlermysql.fetchall()
+    resultados = handlermysql.fetchall()
+    return resultados
+def ejecutarSQLNoSelect(sql, params):
+    try:
+        mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
+        handlermysql = mysqlConexion.cursor()
+        if params is not None:
+            handlermysql.execute(sql, params)
+        else:
+            handlermysql.execute(sql)
+        mysqlConexion.commit()
+        mysqlConexion.close()
+        print("Cambio exitoso")
+    except pymysql.Error as e:
+        print("Error al realizar el cambio:", e)
 
 class Usuario(BaseModel):
-    idUsuario: int
+    idUsuario: Optional[int] = None
     username: str
     passwd: str
-    email: Optional[float] = None
-    flagAZ: Optional[bool] = None
-    Roles_idRoles: Optional[str]
+    email: str
+    flagAZ: bool
+    Roles_idRoles: int
 
 class UserValidation(BaseModel):
     username: str
@@ -51,3 +65,22 @@ async def allUsers():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())
     listaUsuarios = [list(tupla) for tupla in result]
     return {"result": listaUsuarios}
+
+@app.get("/eliminarUsuario/{idUser}")
+async def eliminarUsuarios(idUser: int):
+    try:
+        ejecutarSQLNoSelect("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
+        return {"result":"Correcto"}
+    except:
+        return {"result":"Error"}
+
+@app.post("/crearUsuario")
+async def crearUsuario(user: Usuario):
+    try:
+        print(user.Roles_idRoles, "tipo: ",type(user.Roles_idRoles))
+        ejecutarSQLNoSelect("INSERT INTO usuario (username, passwd, email, flagAZ, Roles_idRoles) VALUES (%s, %s, %s, %s, %s)",
+                            (user.username,user.passwd,user.email,0,user.Roles_idRoles))
+        return {"result":"Correcto"}
+    except Exception as e:
+        print("Error: ", e)
+        return {"result":"Error"}

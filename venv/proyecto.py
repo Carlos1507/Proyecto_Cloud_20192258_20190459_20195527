@@ -54,50 +54,6 @@ def crearSlice():
             crearSlice()
     else:
         zonasDisponibilidad()
-# Listar Slice
-def listarSlice():
-    if(usuarioLog.rol=="Usuario"):
-        ListasAlumnos = [['1', 'Prueba', "11/07/2023", 4, 5, "Si"], 
-                 ['2', 'Entorno1', "19/07/2023", 8, 9, "No"],
-                 ['3', 'Simulación', "4/08/2023", 6, 10, "Si"]]
-        Tabla = """
-        +----------------------- Slices personales creados ---------------------+
-        +-----------------------------------------------------------------------+
-        | N°   Nombre        Fecha        Número VMs  Número Enlaces    Activo  |
-        |-----------------------------------------------------------------------|
-        {}
-        +-----------------------------------------------------------------------+
-        """
-        formatted_rows = []
-        for i, fila in enumerate(ListasAlumnos):
-            if i == 0:
-                formatted_rows.append("| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
-            else:
-                formatted_rows.append("\t| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
-        Tabla = Tabla.format('\n'.join(formatted_rows))
-        print(Tabla)
-    else:
-        ListasAlumnos = [['1', 'Prueba', "11/07/2023", 4, 5, "Si"], 
-                         ['2','VNRT',"7/04/2023",10,20,"Si"], 
-                         ['3','Exogeni',"2/01/2023",15,20,"Si"], 
-                 ['4', 'Entorno1', "19/07/2023", 8, 9, "No"],
-                 ['5', 'Simulación', "4/08/2023", 6, 10, "Si"]]
-        Tabla = """
-        +---------------------- Todos los Slices existentes --------------------+
-        +-----------------------------------------------------------------------+
-        | N°   Nombre        Fecha        Número VMs  Número Enlaces    Activo  |
-        |-----------------------------------------------------------------------|
-        {}
-        +-----------------------------------------------------------------------+
-        """
-        formatted_rows = []
-        for i, fila in enumerate(ListasAlumnos):
-            if i == 0:
-                formatted_rows.append("| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
-            else:
-                formatted_rows.append("\t| {:<3} {:<14} {:<12} {:<12} {:<17} {:<6} |".format(*fila))
-        Tabla = Tabla.format('\n'.join(formatted_rows))
-        print(Tabla)
 # Definir zonas de disponibilidad
 def zonasDisponibilidad():
     if (usuarioLog.eligioAZs == 0):
@@ -184,6 +140,8 @@ if __name__ == "__main__":
         print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
         print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
         usuarioLog = auth()
+        if usuarioLog == None:
+            continue
         print(Fore.CYAN + f"Bienvenido {'Operador:' if usuarioLog.rol == 1 else 'Usuario:'} {usuarioLog.username}")
         opcionPlataforma = seleccionarPlataforma()
         opcion = menu(usuarioLog)

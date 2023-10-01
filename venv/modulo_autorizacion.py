@@ -1,6 +1,7 @@
 import questionary, requests, json, sys, hashlib
 from colorama import Fore, Style, init
-
+global usuarioBD
+global usuarioLog
 class User:
     def __init__(self, idUser, username, correo, rol, eligioAZs):
         self.idUser = idUser
@@ -24,11 +25,14 @@ def autorizacion():
             usuarioBD = dict(response.json())
             if (usuarioBD['result'] == "Incorrecto"):
                 print(Fore.RED + "Credenciales incorrectas")
-                autorizacion()
+                usuarioBD = None
+                usuarioLog = None
+                return
             else:    
                 print(Fore.GREEN + "Logueo exitoso")   
                 usuarioLog = User(usuarioBD['result'][0], usuarioBD['result'][1], usuarioBD['result'][3], 
                                   usuarioBD['result'][5], usuarioBD['result'][4])
+                
                 return usuarioLog
         else:
             print("Error de autenticación")
