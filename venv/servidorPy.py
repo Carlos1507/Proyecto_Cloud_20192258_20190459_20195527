@@ -40,7 +40,15 @@ async def create_item(item: Usuario):
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
+    print(type(result), result)
     if (len(result)!=0):
         return {"result": result[0]}
     else:
         return {"result":"Incorrecto"}
+    
+@app.get("/allUsers")
+async def allUsers():
+    result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())
+    listaUsuarios = [list(tupla) for tupla in result]
+    print(type(listaUsuarios), listaUsuarios)
+    return {"result": listaUsuarios}

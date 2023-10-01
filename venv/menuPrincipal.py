@@ -1,4 +1,6 @@
 import questionary
+from gestionUsuariosOperador import gestionarUsuarios as gestionUsuarios
+from gestionSlicesOperador import gestionarSlices as gestionSlices
 
 def menu(usuarioLog):
     if(usuarioLog.rol==1):    # ACCIONES OPERADOR
@@ -17,9 +19,18 @@ def menu(usuarioLog):
 
 def menuOperador(usuarioLog, opcion):
     if(opcion=="1. Usuarios"):
-        pass   # Módulo gestionar usuarios
+        # Módulo gestionar usuarios
+        while True:
+            opt = gestionUsuarios(usuarioLog)
+            if opt==None:
+                break
     else:
-        pass   # Módulo gestionar slices
+        # Módulo gestionar slices
+        while True:
+            opt = gestionSlices(usuarioLog)
+            if opt==None:
+                break
+    menu(usuarioLog)
 def menuUsuario(usuarioLog, opcion):
     if(opcion=="1. Crear Slice"):
         pass
