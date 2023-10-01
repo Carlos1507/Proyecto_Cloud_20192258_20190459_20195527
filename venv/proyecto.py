@@ -1,12 +1,7 @@
 # Definición de librerías y constantes
-import http.client as httplib
-import questionary
-import getpass
-import json
-import time
-import sys
-import requests
+import questionary, json, sys, requests, hashlib
 from colorama import Fore, Style, init
+from modulo_autorizacion import autorizacion as auth
 init(autoreset=True)
 
 # Variables globales
@@ -15,74 +10,8 @@ global imagenes
 longitudLinea = 30
 imagenesNombres = ["cirros-image.img", "ubuntu-iso-20.04.iso"]
 headers = {'Content-type': 'application/json; charset=utf-8'}
-# Definición de las clases a implementar (elementos):
-class virtualMachine:
-    pass
-class slice:
-    pass
-class User:
-    def __init__(self, idUser, username, correo, rol, eligioAZs):
-        self.idUser = idUser
-        self.username = username
-        self.correo = correo
-        self.rol = rol
-        self.eligioAZs = eligioAZs
         
-# Conexión WebService NodeJS
-endpoint="http://127.0.0.1:8000/"
-class APIServ(object):
-    def __init__(self, server):
-        self.server = server
-    def postReq(self, subruta, data):
-        ret = self.rest_call('POST', subruta, data)
-        return ret
-    def getReq(self, subruta):
-        ret = self.rest_call('GET', subruta)
-        return ret
-    def rest_call(self, action, subruta, data=""):
-        path = endpoint+subruta
-        conn = httplib.HTTPConnection(self.server, 8000)
-        if action == 'POST':
-            body = json.dumps(data)
-            conn.request(action, path, body, headers)
-        elif action == 'GET':
-            conn.request(action, path, "", headers)
-        response = conn.getresponse()
-        status = response.status
-        reason = response.reason
-        content = json.loads(response.read().decode("utf-8"))
-      #  print(f"Status: {status} - {reason}")
-      #  print(f"Response Data: {content}")
-        ret = (response.status, response.reason, content)
-        conn.close()
-        return ret
-
 # Definición de los módulos a implementar:
-def autorizacion():
-    username = questionary.text("Usuario: [digite 0 aquí para salir]").ask()
-    if(username!="0"):
-        passw = questionary.password("Contraseña: ").ask()
-        print("Validando...")
-        response = requests.post(url = "http://127.0.0.1:8000/validarPOST", 
-                                headers = {"Content-Type": "application/json"}, 
-                                data= json.dumps({"username": username, "password": passw}))
-        if(response.status_code == 200):
-            usuarioBD = dict(response.json())
-            if (usuarioBD['result'] == "Incorrecto"):
-                print(Fore.RED + "Credenciales incorrectas")
-                autorizacion()
-            else:    
-                print(Fore.GREEN + "Logueo exitoso")   
-                usuarioLog = User(usuarioBD['result'][0], usuarioBD['result'][1], usuarioBD['result'][3], 
-                                  usuarioBD['result'][5], usuarioBD['result'][4])
-            return usuarioLog
-        else:
-            print("Error de autenticación")
-            autorizacion()
-    else:
-        sys.exit(0)
-        
-# Funciones del menú
 # Crear Slice
 def topologiaPredeterminada():
     print("Seleccione el tipo de topología: \n\t1. Malla\n\t2. Árbol\n\t3. Anillo\n\t4. Lineal\n\t5. Salir")
@@ -103,7 +32,6 @@ def topologiaPersonalizada():
     while(True):
         print("1. Añadir máquina virtual (VM)")
         print("2. Añadir enlace")
-
 
 def eleccionAZ():
     print("--- AZ elegida: ---")
@@ -268,18 +196,17 @@ def menu():
         print("--- Elija una opción válida ---")
         menu()
 def seleccionarPlataforma():
-    opcionPlataforma = questionary.select("Seleccione la plataforma:", choices=["1. Linux", "2. OpenStack"]).ask()
-    if(opcionPlataforma =="1. Linux" or opcionPlataforma=="2. OpenStack"):
+    opcionPlataforma = questionary.select("Seleccione la plataforma:", choices=["1. Linux", "2. OpenStack", "0. Salir"]).ask()
+    if(opcionPlataforma == "1. Linux" or opcionPlataforma=="2. OpenStack"):
         return opcionPlataforma
     else:
         print("--- Elija una opción válida ---")
         seleccionarPlataforma()
 # Función principal
 if __name__ == "__main__":    
-    pusher = APIServ("127.0.0.1")
     print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
     print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
-    usuarioLog = autorizacion()
-    print(Fore.CYAN+f"  Bienvenido {usuarioLog.username}")
+    usuarioLog = auth()
+    print(Fore.CYAN + f"Bienvenido {'Operador:' if usuarioLog.rol == 1 else 'Usuario:'} {usuarioLog.username}")
     opcionPlataforma = seleccionarPlataforma()
     opcion = menu()

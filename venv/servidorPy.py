@@ -2,20 +2,7 @@
 from fastapi import FastAPI
 from typing import Optional
 from pydantic import BaseModel
-import bcrypt
 import pymysql
-
-# Lado del cliente
-def hash_bcrypt(password):
-    password_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password_bytes, salt)
-    return hashed_password
-def comprobar_hash_bcrypt(input_passwd, password_hashed):
-    if bcrypt.checkpw(input_passwd, password_hashed):
-        print("Contraseña correcta")
-    else:
-        print("Contraseña incorrectaaaaaa")
 
 def ejecutarConsultaSQL(sql, params):
     mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
@@ -50,12 +37,9 @@ async def items(item_id: int):
 async def create_item(item: Usuario):
     return {"item_id": item.name, **item.dict()}
 
-@app.get("/passwd/{contrasenia}")
-async def passwordEncoder(contrasenia:str):
-    return {"contrasenia_hash": hash_bcrypt(contrasenia)}
-
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
+    print("Contraseña a validar: ", uservalid.password)
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
     if (len(result)!=0):
         return {"result": result[0]}
