@@ -4,6 +4,13 @@ from typing import Optional
 from pydantic import BaseModel
 import pymysql
 
+listaSlicesGeneral = [["1", "Prueba", "11/07/2023", "4", "5", "Si"],
+                      ["2","VNRT","7/04/2023","10","20","Si"],
+                      ["3","Exogeni","2/01/2023","15","20","Si"],
+                      ["4", "Entorno1", "19/07/2023", "8", "9", "No"],
+                      ["5", "Simulación", "4/08/2023", "6", "10", "Si"]]
+
+
 def ejecutarConsultaSQL(sql, params):
     mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
     handlermysql = mysqlConexion.cursor()
@@ -39,14 +46,6 @@ class UserValidation(BaseModel):
 
 app = FastAPI()
 
-@app.get('/')
-async def root():
-    return {"menssage":"Hello world"}   
-
-@app.get("/items/{item_id}")
-async def items(item_id: int):
-    return {"item_id":item_id}
-
 @app.post("/items/create")
 async def create_item(item: Usuario):
     return {"item_id": item.name, **item.dict()}
@@ -65,6 +64,10 @@ async def allUsers():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())
     listaUsuarios = [list(tupla) for tupla in result]
     return {"result": listaUsuarios}
+
+@app.get("/allSlices")
+async def allSlices():
+    return {"result": listaSlicesGeneral}
 
 @app.get("/eliminarUsuario/{idUser}")
 async def eliminarUsuarios(idUser: int):
