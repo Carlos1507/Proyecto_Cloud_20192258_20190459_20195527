@@ -1,8 +1,5 @@
 import questionary, requests, json, sys, hashlib
 from colorama import Fore, Style, init
-import os
-
-
 
 class User:
     def __init__(self, idUser, username, correo, rol, eligioAZs):

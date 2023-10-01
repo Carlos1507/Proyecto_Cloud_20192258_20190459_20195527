@@ -2,6 +2,7 @@
 import questionary, json, sys, requests, hashlib
 from colorama import Fore, Style, init
 from modulo_autorizacion import autorizacion as auth
+from menuPrincipal import menu
 init(autoreset=True)
 
 # Variables globales
@@ -32,7 +33,6 @@ def topologiaPersonalizada():
     while(True):
         print("1. Añadir máquina virtual (VM)")
         print("2. Añadir enlace")
-
 def eleccionAZ():
     print("--- AZ elegida: ---")
     print(usuarioLog.eleccionAZs)
@@ -155,7 +155,6 @@ def listarImagenes():
             imagenes()
         finally:
             print("Error")
-
 def imagenes():
     print("1. Agregar imagen")
     print("2. Listar imágenes")
@@ -170,43 +169,25 @@ def imagenes():
     else:
         print("--- Elija una acción válida ---")
         imagenes()
+
 # Definición de funciones adicionales a implementar:
-def menu():
-    opcion = ""
-    print("¿Qué acción desea hacer hoy?")
-    print("1. Crear Slice")
-    print("2. Listar Slices")
-    print("3. Definir zona de disponibilidad")
-    print("4. Imágenes")
-    print("5. Cerrar Sesión")
-    opcion = input("\t**Seleccione una opción: ")
-    if(opcion =="1"):
-        crearSlice()
-    elif(opcion =="2"):
-        listarSlice()
-    elif(opcion =="3"):
-        zonasDisponibilidad()     
-    elif(opcion == "4"):
-        imagenes()
-    elif(opcion =="5"):
-        usuarioLog = None
-        print("*** Muchas gracias por usar nuestro sistema ***")
-        sys.exit(0)
-    else:
-        print("--- Elija una opción válida ---")
-        menu()
 def seleccionarPlataforma():
     opcionPlataforma = questionary.select("Seleccione la plataforma:", choices=["1. Linux", "2. OpenStack", "0. Salir"]).ask()
     if(opcionPlataforma == "1. Linux" or opcionPlataforma=="2. OpenStack"):
         return opcionPlataforma
     else:
-        print("--- Elija una opción válida ---")
-        seleccionarPlataforma()
-# Función principal
-if __name__ == "__main__":    
-    print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
-    print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
-    usuarioLog = auth()
-    print(Fore.CYAN + f"Bienvenido {'Operador:' if usuarioLog.rol == 1 else 'Usuario:'} {usuarioLog.username}")
-    opcionPlataforma = seleccionarPlataforma()
-    opcion = menu()
+        print(Fore.RED+"--- Fin del programa ---")
+        sys.exit(0)
+
+if __name__ == "__main__":
+    while True:
+        print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
+        print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
+        usuarioLog = auth()
+        print(Fore.CYAN + f"Bienvenido {'Operador:' if usuarioLog.rol == 1 else 'Usuario:'} {usuarioLog.username}")
+        opcionPlataforma = seleccionarPlataforma()
+        opcion = menu(usuarioLog)
+        if opcion is None:
+            print("Sesión terminada. Vuelva a iniciar sesión")
+        else:
+            break

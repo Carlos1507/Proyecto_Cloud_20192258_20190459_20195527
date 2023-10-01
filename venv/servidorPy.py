@@ -39,7 +39,6 @@ async def create_item(item: Usuario):
 
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
-    print("Contraseña a validar: ", uservalid.password)
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
     if (len(result)!=0):
         return {"result": result[0]}
