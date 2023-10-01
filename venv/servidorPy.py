@@ -4,12 +4,11 @@ from typing import Optional
 from pydantic import BaseModel
 import pymysql
 
-listaSlicesGeneral = [["1", "Prueba", "11/07/2023", "4", "5", "Si"],
-                      ["2","VNRT","7/04/2023","10","20","Si"],
-                      ["3","Exogeni","2/01/2023","15","20","Si"],
-                      ["4", "Entorno1", "19/07/2023", "8", "9", "No"],
-                      ["5", "Simulación", "4/08/2023", "6", "10", "Si"]]
-
+listaSlicesGeneral = [["Prueba", "11/07/2023", "4", "5", "Si"],
+                      ["VNRT","7/04/2023","10","20","Si"],
+                      ["Exogeni","2/01/2023","15","20","Si"],
+                      ["Entorno1", "19/07/2023", "8", "9", "No"],
+                      ["Simulación", "4/08/2023", "6", "10", "Si"]]
 
 def ejecutarConsultaSQL(sql, params):
     mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
@@ -43,6 +42,10 @@ class Usuario(BaseModel):
 class UserValidation(BaseModel):
     username: str
     password: str
+
+class Imagen(BaseModel):
+    nombre: str
+    VMs_idRecursos: Optional[int] = None
 
 app = FastAPI()
 
@@ -86,4 +89,27 @@ async def crearUsuario(user: Usuario):
         return {"result":"Correcto"}
     except Exception as e:
         print("Error: ", e)
+        return {"result":"Error"}
+    
+@app.get("/allImagenes")
+async def listarImagenes():
+    result = ejecutarConsultaSQL("SELECT idImagenes, nombre FROM imagenes", ())
+    listaImagenes = [list(tupla) for tupla in result]
+    return {"result": listaImagenes}
+
+@app.get("/eliminarImagen/{idImagen}")
+async def eliminarImagen(idImagen: str):
+    try:
+        ejecutarSQLNoSelect("DELETE FROM imagenes WHERE idImagenes = %s", (idImagen,))
+        return {"result":"Correcto"}
+    except:
+        return {"result":"Error"}
+    
+@app.post("/agregarImagen")
+async def agregarImagen(imagen: Imagen):
+    print(imagen)
+    try:
+        ejecutarSQLNoSelect("INSERT INTO imagenes (nombre) VALUES (%s)", (imagen.nombre,))
+        return {"result":"Correcto"}
+    except:
         return {"result":"Error"}

@@ -1,6 +1,7 @@
 from rich.console import Console
 from rich.table import Table
 import requests
+from colorama import Fore, Style, init
 console = Console()
 
 def gestionarSlices(usuario):
@@ -16,8 +17,8 @@ def gestionarSlices(usuario):
         table.add_column("Número VMs", justify="lef")
         table.add_column("Número enlaces", justify="left")
         table.add_column("Activo", justify="left")
-        for slice in slices:
-            table.add_row(slice[0], slice[1], slice[2], slice[3], slice[4], slice[5])
+        for i in range(0, len(slices)):
+            table.add_row(str(i+1), slices[i][0], slices[i][1], slices[i][2], slices[i][3], slices[i][4])
         console.print(table)
     else:
         print(Fore.RED + "Error en el servidor")
