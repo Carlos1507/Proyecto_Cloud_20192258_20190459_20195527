@@ -8,6 +8,10 @@ def send_email(email_subject, receiver_email_address, cc_address, content):
 
     message = EmailMessage() 
 
+
+
+    
+
     message['Subject'] = email_subject 
     message['From'] = sender_email_address 
     message['To'] = receiver_email_address 
