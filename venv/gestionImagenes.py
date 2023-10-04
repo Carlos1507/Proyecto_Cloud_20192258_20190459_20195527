@@ -6,7 +6,7 @@ from enviarArchivoSCP import enviarSCP
 console = Console()
 
 longitudLinea = 30
-def gestorImagenes():
+def gestorImagenes(endpointBase):
     opcionesMenuImagenes = ["1. Agregar imagen", "2. Listar imágenes", "3. Eliminar imagen","4. Regresar"]
     opcion = questionary.select("Submenú Gestión de Imágenes: ", choices=opcionesMenuImagenes).ask()  
     if(opcion=="4. Regresar"):
@@ -14,18 +14,18 @@ def gestorImagenes():
         return
     else:
         if(opcion=="1. Agregar imagen"):
-            agregarImagen()
+            agregarImagen(endpointBase)
         elif(opcion=="2. Listar imágenes"):
-            listarImagenes()
+            listarImagenes(endpointBase)
         else:
-            eliminarImagen()
+            eliminarImagen(endpointBase)
     
-def agregarImagen():
+def agregarImagen(endpointBase):
     filename = questionary.path("Seleccionar archivo: ").ask()
     try:
         with open(filename, "r") as archivo:
             enviarSCP(filename, 'ubuntu', '10.20.10.149', '/home/ubuntu', 5800, 'headnode')
-            response = requests.post(url = "http://127.0.0.1:8000/agregarImagen", 
+            response = requests.post(url = endpointBase+ "/agregarImagen", 
                                         headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":filename}))
             if(response.status_code==200 and response.json()['result']=="Correcto"):
                 print(Fore.GREEN+"Imagen agregada exitosamente")
@@ -35,17 +35,17 @@ def agregarImagen():
         print(Fore.RED+"El archivo no se encontró")
     except IOError:
         print(Fore.RED+"Ocurrió un error al intentar abrir el archivo")
-    gestorImagenes()
+    gestorImagenes(endpointBase)
 
-def eliminarImagen():
-    response = requests.get(url = "http://127.0.0.1:8000/allImagenes", 
+def eliminarImagen(endpointBase):
+    response = requests.get(url = endpointBase+"/allImagenes", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         imagenes = response.json()['result']
         imagenesOpciones = [imagen[1] for imagen in imagenes]
         imagenNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=imagenesOpciones).ask()
         idEliminar = [imagen[0] for imagen in imagenes if imagen[1] == imagenNombre] [0]
-        resultadoEliminar = requests.get(url = "http://127.0.0.1:8000/eliminarImagen/"+str(idEliminar), 
+        resultadoEliminar = requests.get(url = endpointBase+"/eliminarImagen/"+str(idEliminar), 
                                          headers = {"Content-Type": "application/json"})
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
             print(Fore.GREEN+"Imagen Eliminado Correctamente")
@@ -53,10 +53,10 @@ def eliminarImagen():
             print(Fore.RED+"Hubo un problema al eliminar, intente nuevamente")
     else:
         print(Fore.RED + "Error en el servidor")
-    gestorImagenes()
+    gestorImagenes(endpointBase)
 
-def listarImagenes():
-    response = requests.get(url = "http://127.0.0.1:8000/allImagenes", 
+def listarImagenes(endpointBase):
+    response = requests.get(url = endpointBase+"/allImagenes", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         imagenes = response.json()['result']
@@ -69,4 +69,4 @@ def listarImagenes():
         console.print(table)
     else:
         print(Fore.RED + "Error en el servidor")
-    gestorImagenes()
+    gestorImagenes(endpointBase)
