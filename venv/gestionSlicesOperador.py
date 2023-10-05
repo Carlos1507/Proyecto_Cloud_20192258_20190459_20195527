@@ -4,9 +4,9 @@ import requests
 from colorama import Fore, Style, init
 console = Console()
 
-def gestionarSlices(usuario):
+def gestionarSlices(usuario, endpointBase):
 
-    response = requests.get(url = "http://127.0.0.1:8000/allSlices", 
+    response = requests.get(url = endpointBase+"/allSlices", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         slices = response.json()['result']

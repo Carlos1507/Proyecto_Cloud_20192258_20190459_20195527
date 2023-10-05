@@ -10,7 +10,7 @@ class User:
         self.rol = rol
         self.eligioAZs = eligioAZs
 
-def autorizacion():
+def autorizacion(endpointBase):
     username = questionary.text("Usuario: [digite 0 aquí para salir]").ask()
     username = username.strip()
     if(username !="0"):
@@ -18,7 +18,7 @@ def autorizacion():
         passw = questionary.password("Contraseña: ").ask()
         hash_sha512.update(passw.encode("utf-8"))
         print("Validando...")
-        response = requests.post(url = "http://127.0.0.1:8000/validarPOST", 
+        response = requests.post(url = endpointBase+"/validarPOST", 
                                 headers = {"Content-Type": "application/json"}, 
                                 data= json.dumps({"username": username, "password": hash_sha512.hexdigest()}))
         if(response.status_code == 200):

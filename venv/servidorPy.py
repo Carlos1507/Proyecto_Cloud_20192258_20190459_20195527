@@ -2,36 +2,21 @@
 from fastapi import FastAPI
 from typing import Optional
 from pydantic import BaseModel
-import pymysql, random
+from sshtunnel import SSHTunnelForwarder
+import random, platform
+
+sistema = platform.system()
+if(sistema =="Linux"):
+    from consultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
+else:
+    from consultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
+
 
 listaSlicesGeneral = [["Prueba", "11/07/2023", "4", "5", "Si"],
                       ["VNRT","7/04/2023","10","20","Si"],
                       ["Exogeni","2/01/2023","15","20","Si"],
                       ["Entorno1", "19/07/2023", "8", "9", "No"],
                       ["Simulación", "4/08/2023", "6", "10", "Si"]]
-
-
-
-def ejecutarConsultaSQL(sql, params):
-    mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
-    handlermysql = mysqlConexion.cursor()
-    handlermysql.execute(sql, params)
-    mysqlConexion.close()
-    resultados = handlermysql.fetchall()
-    return resultados
-def ejecutarSQLNoSelect(sql, params):
-    try:
-        mysqlConexion = pymysql.connect(host="localhost", port=3306, user="root", password="root", database="cloud", charset="utf8mb4")
-        handlermysql = mysqlConexion.cursor()
-        if params is not None:
-            handlermysql.execute(sql, params)
-        else:
-            handlermysql.execute(sql)
-        mysqlConexion.commit()
-        mysqlConexion.close()
-        print("Cambio exitoso")
-    except pymysql.Error as e:
-        print("Error al realizar el cambio:", e)
 
 class Usuario(BaseModel):
     idUsuario: Optional[int] = None
@@ -50,6 +35,16 @@ class Imagen(BaseModel):
     VMs_idRecursos: Optional[int] = None
 
 app = FastAPI()
+
+@app.get("/")
+async def hello():
+    return {"result":"hello world from remote node"}
+
+@app.get("/allUsers/remoto")
+async def allUsersRemoto():
+    result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())
+    listaUsuarios = [list(tupla) for tupla in result]
+    return {"result": listaUsuarios}
 
 @app.post("/items/create")
 async def create_item(item: Usuario):
@@ -83,7 +78,7 @@ async def allSlicesUser(idUser: int):
 @app.get("/eliminarUsuario/{idUser}")
 async def eliminarUsuarios(idUser: int):
     try:
-        ejecutarSQLNoSelect("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
+        ejecutarConsultaSQL("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
@@ -92,7 +87,7 @@ async def eliminarUsuarios(idUser: int):
 async def crearUsuario(user: Usuario):
     try:
         print(user.Roles_idRoles, "tipo: ",type(user.Roles_idRoles))
-        ejecutarSQLNoSelect("INSERT INTO usuario (username, passwd, email, flagAZ, Roles_idRoles) VALUES (%s, %s, %s, %s, %s)",
+        ejecutarConsultaSQL("INSERT INTO usuario (username, passwd, email, flagAZ, Roles_idRoles) VALUES (%s, %s, %s, %s, %s)",
                             (user.username,user.passwd,user.email,0,user.Roles_idRoles))
         return {"result":"Correcto"}
     except Exception as e:
@@ -108,7 +103,7 @@ async def listarImagenes():
 @app.get("/eliminarImagen/{idImagen}")
 async def eliminarImagen(idImagen: str):
     try:
-        ejecutarSQLNoSelect("DELETE FROM imagenes WHERE idImagenes = %s", (idImagen,))
+        ejecutarConsultaSQL("DELETE FROM imagenes WHERE idImagenes = %s", (idImagen,))
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
@@ -117,7 +112,7 @@ async def eliminarImagen(idImagen: str):
 async def agregarImagen(imagen: Imagen):
     print(imagen)
     try:
-        ejecutarSQLNoSelect("INSERT INTO imagenes (nombre) VALUES (%s)", (imagen.nombre,))
+        ejecutarConsultaSQL("INSERT INTO imagenes (nombre) VALUES (%s)", (imagen.nombre,))
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}

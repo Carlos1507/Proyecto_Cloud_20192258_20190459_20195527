@@ -6,24 +6,24 @@ import questionary
 
 console = Console()
 
-def gestionarUsuarios(usuario):
+def gestionarUsuarios(usuario, endpointBase):
     opcionesSubMenuUsuarios = ["1. Crear Usuario", "2. Visualizar Usuarios", "3. Eliminar Usuario","4. Regresar"]
     opcion = questionary.select("Submenú Gestión de Usuarios: ", choices=opcionesSubMenuUsuarios).ask()
     if(opcion =="4. Regresar"):
         return
     else:
         if(opcion == "1. Crear Usuario"):
-            crearUsuario(usuario)
+            crearUsuario(usuario, endpointBase)
         elif(opcion == "2. Visualizar Usuarios"):
-            listarAllUsers(usuario)
+            listarAllUsers(usuario, endpointBase)
         elif(opcion == "3. Eliminar Usuario"):
-            eliminarUsuario(usuario)
+            eliminarUsuario(usuario, endpointBase)
     
-def crearUsuario():
+def crearUsuario(endpointBase):
     pass
 
-def eliminarUsuario(usuario):
-    response = requests.get(url = "http://127.0.0.1:8000/allUsers", 
+def eliminarUsuario(usuario, endpointBase):
+    response = requests.get(url = endpointBase+"/allUsers", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         usuarios = response.json()['result']
@@ -39,7 +39,7 @@ def eliminarUsuario(usuario):
         if(usuarioEliminar=="* Regresar"):
             gestionarUsuarios(usuario)
         idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
-        resultadoEliminar = requests.get(url = "http://127.0.0.1:8000/eliminarUsuario/"+str(idEliminar), 
+        resultadoEliminar = requests.get(url = endpointBase+"/eliminarUsuario/"+str(idEliminar), 
                                          headers = {"Content-Type": "application/json"})
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
             print(Fore.GREEN+"Usuario Eliminado Correctamente")
@@ -47,11 +47,11 @@ def eliminarUsuario(usuario):
             print(Fore.RED+"Hubo un problema al eliminar, intente nuevamente")
     else:
         print(Fore.RED+"Error en el servidor")
-        gestionarUsuarios(usuario)
+        gestionarUsuarios(usuario, endpointBase)
 
 
-def listarAllUsers(usuario):
-    response = requests.get(url = "http://127.0.0.1:8000/allUsers", 
+def listarAllUsers(usuario, endpointBase):
+    response = requests.get(url = endpointBase+ "/allUsers", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         usuarios = response.json()['result']
@@ -64,7 +64,7 @@ def listarAllUsers(usuario):
         for user in usuarios:
             table.add_row(str(user[0]), user[1], user[2], "Si" if user[3]==1 else "No", "Usuario" if user[4]==2 else "Operador")
         console.print(table)
-        gestionarUsuarios(usuario)
+        gestionarUsuarios(usuario, endpointBase)
     else:
         print(Fore.RED + "Error en el servidor")
-        gestionarUsuarios(usuario)
+        gestionarUsuarios(usuario, endpointBase)

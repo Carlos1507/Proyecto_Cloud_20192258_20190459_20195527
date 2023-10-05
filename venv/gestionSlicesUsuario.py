@@ -4,8 +4,8 @@ import requests, questionary
 from colorama import Fore, Style, init
 console = Console()
 
-def gestionarSlicesUsuario(usuario):
-    response = requests.get(url = "http://127.0.0.1:8000/slicesUser/"+str(usuario.idUser), 
+def gestionarSlicesUsuario(usuario, endpointBase):
+    response = requests.get(url = endpointBase+"/slicesUser/"+str(usuario.idUser), 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         slices = response.json()['result']
