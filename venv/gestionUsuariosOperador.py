@@ -2,6 +2,7 @@ import requests
 from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
+from enviarMail import send_email
 import questionary
 
 console = Console()
@@ -37,7 +38,7 @@ def eliminarUsuario(usuario, endpointBase):
         listaUsuarios.append("* Regresar")
         usuarioEliminar = questionary.rawselect("Elija un usuario a eliminar: (O seleccione la última opción para volver)", choices=listaUsuarios).ask()
         if(usuarioEliminar=="* Regresar"):
-            gestionarUsuarios(usuario)
+            gestionarUsuarios(usuario, endpointBase)
         idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
         resultadoEliminar = requests.get(url = endpointBase+"/eliminarUsuario/"+str(idEliminar), 
                                          headers = {"Content-Type": "application/json"})

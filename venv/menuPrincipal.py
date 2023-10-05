@@ -32,7 +32,7 @@ def menuOperador(usuarioLog, opcion, endpointBase):
             opt = gestionSlices(usuarioLog, endpointBase)
             if opt==None:
                 break
-    menu(usuarioLog)
+    menu(usuarioLog, endpointBase)
 def menuUsuario(usuarioLog, opcion, endpointBase):
     if(opcion=="1. Crear Slice"):
         pass
@@ -48,4 +48,4 @@ def menuUsuario(usuarioLog, opcion, endpointBase):
             opt = gestionImagenes(endpointBase)
             if opt==None:
                 break
-    menu(usuarioLog)
+    menu(usuarioLog, endpointBase)
