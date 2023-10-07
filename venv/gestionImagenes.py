@@ -3,6 +3,7 @@ from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
 from enviarArchivoSCP import enviarSCP
+from eliminarArchivoRemoto import execRemoto
 console = Console()
 
 longitudLinea = 30
@@ -24,7 +25,7 @@ def agregarImagen(endpointBase):
     filename = questionary.path("Seleccionar archivo: ").ask()
     try:
         with open(filename, "r") as archivo:
-            enviarSCP(filename, 'ubuntu', '10.20.10.149', '/home/ubuntu', 5800, 'headnode')
+            enviarSCP(filename, 'ubuntu', '10.20.10.149', '/home/ubuntu/imagenes', 5800, 'headnode')
             response = requests.post(url = endpointBase+ "/agregarImagen", 
                                         headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":filename}))
             if(response.status_code==200 and response.json()['result']=="Correcto"):
@@ -47,6 +48,7 @@ def eliminarImagen(endpointBase):
         idEliminar = [imagen[0] for imagen in imagenes if imagen[1] == imagenNombre] [0]
         resultadoEliminar = requests.get(url = endpointBase+"/eliminarImagen/"+str(idEliminar), 
                                          headers = {"Content-Type": "application/json"})
+        execRemoto("rm imagenes/"+imagenNombre, "10.20.10.149")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
             print(Fore.GREEN+"Imagen Eliminado Correctamente")
         else:

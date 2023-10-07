@@ -94,7 +94,7 @@ def seleccionarPlataforma():
         sys.exit(0)
 
 if __name__ == "__main__":
-    endpointBase = "http://127.0.0.1:9000"
+    endpointBase = "http://127.0.0.1:8000"
     while True:
         print("Bienvenido al Servicio Cloud: CCG (The Cloud Computing Gods)")
         print("Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")
