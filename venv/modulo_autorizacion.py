@@ -36,6 +36,6 @@ def autorizacion(endpointBase):
                 return usuarioLog
         else:
             print("Error de autenticación")
-            autorizacion()
+            autorizacion(endpointBase)
     else:
         sys.exit(0)

@@ -5,13 +5,7 @@ def send_email(email_subject, receiver_email_address, cc_address, content):
     sender_email_address = "carlos.anthonio.15.07@gmail.com" 
     email_smtp = "smtp.gmail.com" 
     email_password = "inhrxgeuxurwleqa" 
-
     message = EmailMessage() 
-
-
-
-    
-
     message['Subject'] = email_subject 
     message['From'] = sender_email_address 
     message['To'] = receiver_email_address 

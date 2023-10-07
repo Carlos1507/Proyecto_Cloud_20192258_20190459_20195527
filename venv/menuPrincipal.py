@@ -3,17 +3,20 @@ from gestionUsuariosOperador import gestionarUsuarios as gestionUsuarios
 from gestionSlicesOperador import gestionarSlices as gestionSlices
 from gestionImagenes import gestorImagenes as gestionImagenes
 from gestionSlicesUsuario import gestionarSlicesUsuario as gestionSlicesUsuario
+from moduloPlataforma import seleccionarPlataforma
+from gestionAZ import zonasDisponibilidad
+from crearSlices import crearSlice
 
 def menu(usuarioLog, endpointBase):
     if(usuarioLog.rol==1):    # ACCIONES OPERADOR
-        opcionesMenu = ["1. Usuarios", "2. Slices", "3. Cerrar Sesión"]
+        opcionesMenu = ["1. Usuarios", "2. Slices","3. Definir zona de disponibilidad", "4. Selección plataforma","5. Imágenes","Cerrar Sesión"]
     else:                     # ACCIONES USUARIO
-        opcionesMenu = ["1. Crear Slice","2. Listar Slices","3. Definir zona de disponibilidad","4. Imágenes","5. Cerrar Sesión"]
+        opcionesMenu = ["1. Crear Slice","2. Listar Slices","Cerrar Sesión"]
     opcion = questionary.select("¿Qué acción desea hacer hoy?", choices=opcionesMenu).ask()
     
-    if(opcion == "3. Cerrar Sesión" or opcion == "5. Cerrar Sesión"):
+    if(opcion == "Cerrar Sesión"):
         return
-    else:    
+    else:
         if(usuarioLog.rol==1):    # MENÚ OPERADOR
             menuOperador(usuarioLog, opcion, endpointBase)
         elif(usuarioLog.rol==2):  # MENÚ USUARIO
@@ -22,30 +25,45 @@ def menu(usuarioLog, endpointBase):
 def menuOperador(usuarioLog, opcion, endpointBase):
     if(opcion=="1. Usuarios"):
         # Módulo gestionar usuarios
+        print("Módulo gestionar usuarios")
         while True:
             opt = gestionUsuarios(usuarioLog, endpointBase)
-            if opt==None:
-                break
-    else:
+            if opt==None: break
+    elif(opcion=="2. Slices"):
         # Módulo gestionar slices
+        print("Módulo gestionar slices")
         while True:
             opt = gestionSlices(usuarioLog, endpointBase)
-            if opt==None:
-                break
-    menu(usuarioLog, endpointBase)
-def menuUsuario(usuarioLog, opcion, endpointBase):
-    if(opcion=="1. Crear Slice"):
-        pass
-    elif(opcion=="2. Listar Slices"):
-        while True:
-            opt = gestionSlicesUsuario(usuarioLog, endpointBase)
-            if opt==None:
-                break
+            if opt==None: break
     elif(opcion=="3. Definir zona de disponibilidad"):
-        pass
+        # Módulo definir zonas de disponibilidad
+        print("Módulo definir zonas de disponibilidad")
+        while True:
+            opt = zonasDisponibilidad(usuarioLog, endpointBase)
+            if opt==None: break
+    elif(opcion=="4. Selección plataforma"):
+        # Módulo selección plataforma
+        print("Módulo selección plataforma")
+        while True:
+            opt = seleccionarPlataforma()
+            if opt==None: break
     else:
+        # Módulo gestionar imágenes
+        print("Módulo gestionar imágenes")
         while True:
             opt = gestionImagenes(endpointBase)
-            if opt==None:
-                break
+            if opt==None: break
+    menu(usuarioLog, endpointBase)
+    
+def menuUsuario(usuarioLog, opcion, endpointBase):
+    if(opcion=="1. Crear Slice"):
+        print("Módulo crear Slice")
+        while True:
+            opt = crearSlice(usuarioLog, endpointBase)
+            if opt==None: break
+    elif(opcion=="2. Listar Slices"):
+        print("Módulo listar/editar/borrar slice")
+        while True:
+            opt = gestionSlicesUsuario(usuarioLog, endpointBase)
+            if opt==None: break
     menu(usuarioLog, endpointBase)
