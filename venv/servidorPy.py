@@ -2,7 +2,6 @@
 from fastapi import FastAPI
 from typing import Optional
 from pydantic import BaseModel
-from sshtunnel import SSHTunnelForwarder
 import random, platform
 
 sistema = platform.system()
@@ -33,8 +32,12 @@ class UserValidation(BaseModel):
 class Imagen(BaseModel):
     nombre: str
     VMs_idRecursos: Optional[int] = None
+class AZsConf(BaseModel):
+    azs: list
 
 app = FastAPI()
+
+plataformaEnUso = ""
 
 @app.get("/")
 async def hello():
@@ -52,6 +55,8 @@ async def create_item(item: Usuario):
 
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
+    global plataformaEnUso
+    print("Plataforma "+plataformaEnUso)
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
     print(type(result), result)
     if (len(result)!=0):
@@ -116,3 +121,18 @@ async def agregarImagen(imagen: Imagen):
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
+
+@app.post("/guardarAZs")
+async def guardarAZs(confAZ: AZsConf):
+    print("Helloooooooo")
+    ejecutarConsultaSQL("DELETE FROM zonas",())
+    ejecutarConsultaSQL("ALTER TABLE zonas AUTO_INCREMENT = 1",())
+    for az in confAZ.azs:
+        ejecutarConsultaSQL("INSERT INTO zonas (nombre) values (%s)", az)
+
+@app.get("/guardarPlataforma/{plataforma}")
+async def guardarPlataforma(plataforma: str):
+    print(plataforma)
+    global plataformaEnUso
+    plataformaEnUso = plataforma
+    return {"result":"Guardado exitoso"}

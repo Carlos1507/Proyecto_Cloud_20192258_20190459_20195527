@@ -45,7 +45,7 @@ def menuOperador(usuarioLog, opcion, endpointBase):
         # Módulo selección plataforma
         print("Módulo selección plataforma")
         while True:
-            opt = seleccionarPlataforma()
+            opt = seleccionarPlataforma(endpointBase)
             if opt==None: break
     else:
         # Módulo gestionar imágenes
