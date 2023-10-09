@@ -23,3 +23,6 @@ def graficarTopologia(title, listaVMs, listaSWs, listaEnlaces):
 
     ax.set_title(title)
     plt.show()
+def importarTopolog(fileName):
+    print("Importando ...")
+    return

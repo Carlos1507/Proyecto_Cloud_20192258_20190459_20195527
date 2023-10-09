@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from typing import Optional
 from pydantic import BaseModel
-import random, platform
+import random, platform, json
 from resourceManager import validarRecursosDisponibles
 from vmPlacement import crearSlice
 
@@ -11,13 +11,6 @@ if(sistema =="Linux"):
     from Recursos.funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
 else:
     from Recursos.funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
-
-
-listaSlicesGeneral = [["Prueba", "11/07/2023", "4", "5", "Si"],
-                      ["VNRT","7/04/2023","10","20","Si"],
-                      ["Exogeni","2/01/2023","15","20","Si"],
-                      ["Entorno1", "19/07/2023", "8", "9", "No"],
-                      ["Simulación", "4/08/2023", "6", "10", "Si"]]
 
 class Usuario(BaseModel):
     idUsuario: Optional[int] = None
@@ -40,32 +33,40 @@ class AZsConf(BaseModel):
 app = FastAPI()
 
 plataformaEnUso = ""
+slicesUsuarios = [{3: {'vms': [{'nombre': 'vm1', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm2', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm3', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm4', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}], 'switches': ['sw1', 'sw2', 'sw3', 'sw4'], 'enlaces': [['sw1', 'vm1'], ['sw2', 'vm2'], ['sw3', 'vm3'], ['sw4', 'vm4'], ['sw1', 'sw2'], ['sw2', 'sw3'], ['sw3', 'sw4'], ['sw4', 'sw1'], ['sw1', 'sw3'], ['sw2', 'sw4']], 'nombre': 'Prueba', 'fecha': '09/10/2023'}}]  
 disponible = True
-contClientes = 0
 usuarioEnAtencion = 0
 
 @app.get("/")
 async def hello():
+    global slicesUsuarios
+    print(slicesUsuarios)
     return {"result":"hello world from remote node"}
 
 @app.get("/disponible/{idUser}")
 async def disponibleValidar(idUser: int):
-    global disponible, contClientes, usuarioEnAtencion
-    if(disponible == True & contClientes == 0):
+    global disponible, usuarioEnAtencion
+    if(disponible == True):
+        print("Disponible")
         disponible == False
-        contClientes +=1
         usuarioEnAtencion = idUser
         return {"result":"Disponible"}
     else:
+        print("Ocupado")
         return {"result":"Ocupado"}
 
 @app.post("/validacionRecursos/{idUser}")
 async def validacionRecursosDisponibles(idUser: int, request: Request):
-    global usuarioEnAtencion, disponible, contClientes
+    global usuarioEnAtencion, disponible, slicesUsuarios
     if(usuarioEnAtencion == idUser):
         data = await request.json()
         if(validarRecursosDisponibles(data) == True): ## Resource Manager
             crearSlice(data)   ## VM Placement
+            listaSlices = slicesUsuarios
+            listaSlices.append({idUser: data})
+            slicesUsuarios = listaSlices
+            disponible = True
+            print(slicesUsuarios)
             return {"result": "Slice creado exitosamente"}
         else:
             return {"result": "En este momentoNo se cuentan con los suficientes \
@@ -102,12 +103,13 @@ async def allUsers():
 
 @app.get("/allSlices")
 async def allSlices():
-    return {"result": listaSlicesGeneral}
+    global slicesUsuarios
+    return {"result": slicesUsuarios}
 
 @app.get("/slicesUser/{idUser}")
 async def allSlicesUser(idUser: int):
-    num_slices = random.randint(1, len(listaSlicesGeneral))
-    slicesUser = random.sample(listaSlicesGeneral, num_slices)
+    global slicesUsuarios
+    slicesUser = [diccionario for diccionario in slicesUsuarios if idUser in diccionario]
     return {"result": slicesUser}
 
 @app.get("/eliminarUsuario/{idUser}")
@@ -117,6 +119,27 @@ async def eliminarUsuarios(idUser: int):
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
+    
+@app.post("/eliminarSlice/{idUser}")
+async def eliminarSlice(idUser: str, request: Request):
+    global slicesUsuarios
+    data = await request.json()
+    print(json.dumps(data))
+
+    listaSlicesUsuariosModif = slicesUsuarios
+    print(data[idUser]['nombre'])
+
+    for slice in slicesUsuarios:
+        idUsuario = next(iter(slice.keys()))
+        nombre = slice[idUsuario]['nombre']
+        if(nombre ==data[idUser]['nombre']):
+            sliceEliminar = slice
+    listaSlicesUsuariosModif.remove(sliceEliminar)
+    slicesUsuarios = listaSlicesUsuariosModif
+   # listaSlicesUsuariosModif.remove(data)
+   # slicesUsuarios = listaSlicesUsuariosModif
+    return {"result":"Eliminado con éxito"}
+
 
 @app.post("/crearUsuario")
 async def crearUsuario(user: Usuario):

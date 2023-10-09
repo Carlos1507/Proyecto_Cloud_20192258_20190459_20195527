@@ -7,6 +7,13 @@ class VM:
         self.capacidad = capacidad
         self.cpu = cpu
         self.imagen = imagen
+    def to_dict(self):
+        return {
+            'nombre': self.nombre,
+            'capacidad': self.capacidad,
+            'cpu': self.cpu,
+            'imagen': self.imagen
+        }
 
 def agregarVM(endpointBase):
     print(Fore.CYAN+"Creación de su máquina virtual:")
@@ -19,7 +26,7 @@ def agregarVM(endpointBase):
         imagenes = response.json()['result']
         imagenesNombres = [imagen[1] for imagen in imagenes]
         imagenNombre = questionary.select("Seleccione una de las imágenes disponibles:", choices = imagenesNombres).ask()
-        return VM(nombreVM, capacidadVM, cpuVM, imagenNombre)    
+        return VM(nombreVM, capacidadVM, cpuVM, imagenNombre).to_dict()   
     else:
         print(Fore.RED + "Error en el servidor, en este momento no se puede acceder a las imágenes")
 
@@ -29,7 +36,7 @@ def agregarSwitch():
     return nombreSW
 
 def generarEnlace(listaVMs, listaSwitches, listaEnlaces):
-    listaNombresVMs = [vm.nombre for vm in listaVMs]
+    listaNombresVMs = [vm['nombre'] for vm in listaVMs]
     if(len(listaSwitches)>=2):
         choicesTiposEnlace = ["Conectar Switch - Switch", "Conectar Switch - Máquina virtual"]
     else:
@@ -47,7 +54,7 @@ def generarEnlace(listaVMs, listaSwitches, listaEnlaces):
         return (switch, vm)
 
 def dispositivosNoConectados(listaVMs, listaSwitches, listaEnlaces):
-    listaNombresVMs = [vm.nombre for vm in listaVMs]
+    listaNombresVMs = [vm['nombre'] for vm in listaVMs]
     conjunto_tuplas = set()
     conjunto_vms = set(listaNombresVMs)
     conjunto_switches = set(listaSwitches)

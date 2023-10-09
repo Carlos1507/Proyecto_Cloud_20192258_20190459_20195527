@@ -1,2 +1,2 @@
 def validarRecursosDisponibles(data):
-    pass
+    return True

@@ -11,14 +11,21 @@ def gestionarSlices(usuario, endpointBase):
     if(response.status_code == 200):
         slices = response.json()['result']
         table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("N°", justify="right")
+        table.add_column("idUser", justify="right")
         table.add_column("Nombre",justify="center")
         table.add_column("Fecha", justify="left")
         table.add_column("Número VMs", justify="lef")
+        table.add_column("Número switches", justify="left")
         table.add_column("Número enlaces", justify="left")
-        table.add_column("Activo", justify="left")
-        for i in range(0, len(slices)):
-            table.add_row(str(i+1), slices[i][0], slices[i][1], slices[i][2], slices[i][3], slices[i][4])
+        
+        for slice in slices:
+            idUser = next(iter(slice.keys()))
+            nombre = slice[idUser]['nombre']
+            fecha = slice[idUser]['fecha']
+            numVMs = str(len(slice[idUser]['vms']))
+            numSWs = str(len(slice[idUser]['switches']))
+            numLinks = str(len(slice[idUser]['enlaces']))
+            table.add_row(str(idUser), nombre, fecha, numVMs, numSWs,numLinks)
         console.print(table)
     else:
         print(Fore.RED + "Error en el servidor")

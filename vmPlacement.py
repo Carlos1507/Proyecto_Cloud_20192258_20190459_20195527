@@ -1,2 +1,2 @@
 def crearSlice(data):
-    pass
+    return True
