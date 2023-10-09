@@ -1,26 +1,24 @@
 import questionary, requests, json
+from colorama import Fore, Style, init
 
 def zonasDisponibilidad(usuarioLog, endpointBase):
-    opcion1 = "Plan 1: AZ1: Worker1  AZ2:Worker2  AZ3:Worker3"
-    opcion2 = "Plan 2: Worker1 & Worker2 AZ2:Worker3"
-    opcion3 = "Plan 3: AZ1: Worker1 & Worker2 & Worker3"
-    choicesAZ = [opcion1, opcion2, opcion3]
-    opcion = questionary.select("Seleccione la configuración de AZs", choices=choicesAZ).ask()
-    if(opcion==opcion1):
-        AZs = ["Worker1", "Worker2", "Worker3"]
-        payload = {"azs": AZs}
-        response = requests.post(url = endpointBase+"/guardarAZs", 
-                                headers = {"Content-Type": "application/json"}, 
-                                data= json.dumps(payload))
-    elif(opcion==opcion2):
-        AZs = ["Worker1 & Worker2", "Worker3"]
-        payload = {"azs": AZs}
-        response = requests.post(url = endpointBase+"/guardarAZs", 
-                                headers = {"Content-Type": "application/json"}, 
-                                data= json.dumps(payload))
+    print(Fore.CYAN+"Definiendo zonas de disponibilidad...")  
+    opcion1 = "Plan 1: Silver Zone"
+    opcion2 = "Plan 2: Gold Zone"
+    choicesAZ = [opcion1, opcion2]
+    opcion = questionary.select("Seleccione el plan a configurar", choices=choicesAZ).ask()
+
+    choicesRecursos = ["1 worker", "3 workers"]
+    opcionRecursos = questionary.select("Seleccione recursos físicos", choices=choicesRecursos).ask()
+
+    if(opcionRecursos=="1 worker"):
+        AZs = ["Única Zona"]
     else:
-        AZs = ["Worker1 & Worker2 & Worker3"]
-        payload = {"azs": AZs}
-        response = requests.post(url = endpointBase+"/guardarAZs", 
+        AZs = ["Zona Norte", "Zona Centro", "Zona Sur"]
+
+    payload = {"azs": AZs}
+    response = requests.post(url = endpointBase+"/guardarAZs", 
                                 headers = {"Content-Type": "application/json"}, 
                                 data= json.dumps(payload))
+    if(response.status_code==200):
+        print(Fore.GREEN+"Configuración exitosa")

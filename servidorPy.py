@@ -80,10 +80,6 @@ async def allUsersRemoto():
     listaUsuarios = [list(tupla) for tupla in result]
     return {"result": listaUsuarios}
 
-@app.post("/items/create")
-async def create_item(item: Usuario):
-    return {"item_id": item.name, **item.dict()}
-
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
     global plataformaEnUso

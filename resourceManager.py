@@ -1,2 +1,4 @@
+import random
 def validarRecursosDisponibles(data):
-    return True
+    choices = [True, True, True, True, True, False]
+    return random.choice(choices)
