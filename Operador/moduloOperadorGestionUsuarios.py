@@ -1,9 +1,8 @@
-import requests
+import requests, questionary, random, string, re, hashlib, json
 from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
 from Recursos.funcionEnviarMail import send_email
-import questionary
 
 console = Console()
 
@@ -14,14 +13,71 @@ def gestionarUsuarios(usuario, endpointBase):
         return
     else:
         if(opcion == "1. Crear Usuario"):
-            crearUsuario(endpointBase)
+            crearUsuario(usuario, endpointBase)
         elif(opcion == "2. Visualizar Usuarios"):
             listarAllUsers(usuario, endpointBase)
         elif(opcion == "3. Eliminar Usuario"):
             eliminarUsuario(usuario, endpointBase)
     
-def crearUsuario(endpointBase):
-    pass
+def crearUsuario(usuario, endpointBase):
+    print("Ingrese los siguiente datos: ")
+    username = questionary.text("Username:").ask().strip()
+    print("Verificando username disponible ...")
+    response = requests.get(url = endpointBase+ "/allUsers", headers = {"Content-Type": "application/json"})
+    if(response.status_code == 200):
+        # Validando username no repetido y diferente de vacio
+        listUsernames = [elemento[1] for elemento in response.json()['result']]
+        while(True):
+            if(username!=''):
+                coincidencia = 0
+                for user in listUsernames:
+                    if (user == username):
+                        coincidencia = 1
+                if (coincidencia == 1):
+                    print(Fore.RED+"Username ya usado, ingrese otro")
+                    username = questionary.text("Username:").ask().strip()
+                else:
+                    print(Fore.GREEN+"Username disponible")
+                    break
+            else:
+                print(Fore.RED+"Username no valido, ingresa de nuevo")
+                username = questionary.text("Username:").ask().strip()
+        # Validando correo no repetido y formato
+        email = questionary.text("Correo:").ask().strip()
+        listCorreos = [elemento[2] for elemento in response.json()['result']]
+        while(True):
+            if(re.search(r'@', email)):
+                coincidencia = 0
+                for correo in listCorreos:
+                    if (correo == email):
+                        coincidencia = 1
+                if (coincidencia == 1):
+                    print(Fore.RED+"Correo ya registrado, ingrese otro")
+                    email = questionary.text("Correo:").ask().strip()  
+                else:
+                    break
+            else:
+                print(Fore.RED+"No cumple el formato de correo, ingresa de nuevo")
+                email = questionary.text("Correo:").ask().strip()  
+    else:
+        print(Fore.RED + "Error servidor, vuelva a intentar")
+    # Generar contraseña aleatoria
+    caracteres = string.ascii_letters + string.digits + string.punctuation
+    passwd = ''.join(random.choice(caracteres) for _ in range(8))
+    hash_sha512 = hashlib.sha512()
+    hash_sha512.update(passwd.encode("utf-8"))
+    # Creando usuario
+    respoCrear = requests.post(url = endpointBase+ "/crearUsuario", headers = {"Content-Type": "application/json"}, 
+                               data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"flagAZ":True,"Roles_idRoles":2}))
+    if(respoCrear.status_code == 200):
+        print(Fore.GREEN+"Usuario creado exitosamente")
+        #send_email("[OLIMPUS] Credenciales de acceso - PUCP", email, username, passwd)
+        print(Fore.GREEN+"Correo enviado con credenciales")
+        gestionarUsuarios(usuario, endpointBase)
+    else:
+        print("Error en el servidor, vuelva a intentar")
+        gestionarUsuarios(usuario, endpointBase)
+
 
 def eliminarUsuario(usuario, endpointBase):
     response = requests.get(url = endpointBase+"/allUsers", 
