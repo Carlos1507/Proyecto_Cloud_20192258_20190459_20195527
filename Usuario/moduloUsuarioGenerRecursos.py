@@ -9,6 +9,7 @@ class VM:
         self.imagen = imagen
 
 def agregarVM(endpointBase):
+    print(Fore.CYAN+"Creación de su máquina virtual:")
     nombreVM = questionary.text("Ingrese el nombre de la VM:").ask()
     capacidadVM = questionary.text("Ingrese la capacidad (Tamaño disco) en MB:").ask()
     cpuVM = questionary.text("Ingres el número de cores para la VM (CPUs)").ask()
@@ -23,6 +24,7 @@ def agregarVM(endpointBase):
         print(Fore.RED + "Error en el servidor, en este momento no se puede acceder a las imágenes")
 
 def agregarSwitch():
+    print(Fore.CYAN+"Creación de su switch:")
     nombreSW = questionary.text("Ingrese el nombre del switch:").ask()
     return nombreSW
 
