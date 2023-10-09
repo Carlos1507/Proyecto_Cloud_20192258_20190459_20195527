@@ -1,8 +1,10 @@
 #!/usr/bin/python
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from typing import Optional
 from pydantic import BaseModel
 import random, platform
+from resourceManager import validarRecursosDisponibles
+from vmPlacement import crearSlice
 
 sistema = platform.system()
 if(sistema =="Linux"):
@@ -38,10 +40,38 @@ class AZsConf(BaseModel):
 app = FastAPI()
 
 plataformaEnUso = ""
+disponible = True
+contClientes = 0
+usuarioEnAtencion = 0
 
 @app.get("/")
 async def hello():
     return {"result":"hello world from remote node"}
+
+@app.get("/disponible/{idUser}")
+async def disponibleValidar(idUser: int):
+    global disponible, contClientes, usuarioEnAtencion
+    if(disponible == True & contClientes == 0):
+        disponible == False
+        contClientes +=1
+        usuarioEnAtencion = idUser
+        return {"result":"Disponible"}
+    else:
+        return {"result":"Ocupado"}
+
+@app.post("/validacionRecursos/{idUser}")
+async def validacionRecursosDisponibles(idUser: int, request: Request):
+    global usuarioEnAtencion, disponible, contClientes
+    if(usuarioEnAtencion == idUser):
+        data = await request.json()
+        if(validarRecursosDisponibles(data) == True): ## Resource Manager
+            crearSlice(data)   ## VM Placement
+            return {"result": "Slice creado exitosamente"}
+        else:
+            return {"result": "En este momentoNo se cuentan con los suficientes \
+                    recursos para generar este slice"}
+    else:
+        return {"result":"El servidor está atentiendo a otro usuario, espere su turno"}
 
 @app.get("/allUsers/remoto")
 async def allUsersRemoto():

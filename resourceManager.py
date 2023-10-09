@@ -1,0 +1,2 @@
+def validarRecursosDisponibles(data):
+    pass
