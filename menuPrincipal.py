@@ -1,11 +1,11 @@
 import questionary
-from gestionUsuariosOperador import gestionarUsuarios as gestionUsuarios
-from gestionSlicesOperador import gestionarSlices as gestionSlices
-from gestionImagenes import gestorImagenes as gestionImagenes
-from gestionSlicesUsuario import gestionarSlicesUsuario as gestionSlicesUsuario
-from moduloPlataforma import seleccionarPlataforma
-from gestionAZ import zonasDisponibilidad
-from crearSlices import crearSlice
+from Operador.moduloOperadorGestionUsuarios import gestionarUsuarios as gestionUsuarios
+from Operador.moduloOperadorGestionSlices import gestionarSlices as gestionSlices
+from Operador.moduloOperadorGestionImagenes import gestorImagenes as gestionImagenes
+from Usuario.moduloUsuarioGestionSlices import gestionarSlicesUsuario as gestionSlicesUsuario
+from Operador.moduloOperadorPlataforma import seleccionarPlataforma
+from Operador.moduloOperadorGestionAZ import zonasDisponibilidad
+from Usuario.moduloUsuarioCrearSlices import crearSlice
 
 def menu(usuarioLog, endpointBase):
     if(usuarioLog.rol==1):    # ACCIONES OPERADOR

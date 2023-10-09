@@ -2,7 +2,7 @@ import requests
 from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
-from enviarMail import send_email
+from Recursos.funcionEnviarMail import send_email
 import questionary
 
 console = Console()
@@ -14,7 +14,7 @@ def gestionarUsuarios(usuario, endpointBase):
         return
     else:
         if(opcion == "1. Crear Usuario"):
-            crearUsuario(usuario, endpointBase)
+            crearUsuario(endpointBase)
         elif(opcion == "2. Visualizar Usuarios"):
             listarAllUsers(usuario, endpointBase)
         elif(opcion == "3. Eliminar Usuario"):

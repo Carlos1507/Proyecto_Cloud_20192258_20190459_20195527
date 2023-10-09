@@ -6,9 +6,9 @@ import random, platform
 
 sistema = platform.system()
 if(sistema =="Linux"):
-    from consultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
+    from Recursos.funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
 else:
-    from consultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
+    from Recursos.funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
 
 
 listaSlicesGeneral = [["Prueba", "11/07/2023", "4", "5", "Si"],

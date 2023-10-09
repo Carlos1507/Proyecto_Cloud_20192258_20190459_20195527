@@ -5,7 +5,7 @@ from sshtunnel import SSHTunnelForwarder
 ssh_host = '10.20.10.149'
 ssh_port = 5800
 ssh_user = 'ubuntu'
-ssh_key_path = 'headnode'
+ssh_key_path = 'venv/headnode'
 
 # Detalles de la conexión MySQL a través del túnel SSH
 mysql_port = 3306

@@ -2,8 +2,8 @@ import questionary, requests, json
 from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
-from enviarArchivoSCP import enviarSCP
-from eliminarArchivoRemoto import execRemoto
+from Recursos.funcionEnviarArchivoSCP import enviarSCP
+from Recursos.funcionEliminarArchivoRemoto import execRemoto
 console = Console()
 
 longitudLinea = 30

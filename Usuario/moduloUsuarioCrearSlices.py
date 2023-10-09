@@ -1,6 +1,6 @@
 import questionary
 from colorama import Fore
-import moduloGeneracionRecursos as recurso
+import Usuario.moduloUsuarioGenerRecursos as recurso
 
 def crearSlice(usuarioLog, endpointBase):
     title = "Seleccione un tipo de topología:"
