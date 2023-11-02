@@ -71,7 +71,7 @@ def crearUsuario(usuario, endpointBase):
                                data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"flagAZ":True,"Roles_idRoles":2}))
     if(respoCrear.status_code == 200):
         print(Fore.GREEN+"Usuario creado exitosamente")
-        #send_email("[OLIMPUS] Credenciales de acceso - PUCP", email, username, passwd)
+        send_email("[OLIMPUS] Credenciales de acceso - PUCP", email, username, passwd)
         print(Fore.GREEN+"Correo enviado con credenciales")
         gestionarUsuarios(usuario, endpointBase)
     else:

@@ -2,14 +2,15 @@ import pymysql, paramiko
 from sshtunnel import SSHTunnelForwarder
 
 # Detalles de la conexión SSH
-ssh_host = '10.20.10.149'
+ssh_host = '10.20.10.221'
 ssh_port = 5800
 ssh_user = 'ubuntu'
-ssh_key_path = 'venv/headnode'
+ssh_password = 'ubuntu'
+# ssh_key_path = 'venv/headnode'
 
 # Detalles de la conexión MySQL a través del túnel SSH
-mysql_port = 3306
-mysql_user = 'grupo2'
+mysql_port = 4000
+mysql_user = 'root'
 mysql_password = 'cloud2023'
 mysql_database = 'cloud'
 mysql_hostname = "127.0.0.1"
@@ -18,8 +19,9 @@ def ejecutarSQLRemoto(sql, params):
     try:
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh_client.connect(ssh_host, ssh_port, ssh_user, key_filename=ssh_key_path)
-        with SSHTunnelForwarder((ssh_host, ssh_port), ssh_username=ssh_user, ssh_private_key=ssh_key_path,
+      #  ssh_client.connect(ssh_host, ssh_port, ssh_user, key_filename=ssh_key_path)
+        ssh_client.connect(ssh_host, ssh_port, ssh_user, ssh_password)
+        with SSHTunnelForwarder((ssh_host, ssh_port), ssh_username=ssh_user,ssh_password=ssh_password,
                                 remote_bind_address=(mysql_hostname, mysql_port),) as tunnel:
             mysql_conn = pymysql.connect(
                 host=mysql_hostname, port=tunnel.local_bind_port,
