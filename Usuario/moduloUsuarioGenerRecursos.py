@@ -1,5 +1,6 @@
 import questionary, requests
 from colorama import Fore
+import copy
 
 class VM:
     def __init__(self, nombre, capacidad, cpu, imagen):
@@ -30,10 +31,18 @@ def agregarVM(endpointBase):
     else:
         print(Fore.RED + "Error en el servidor, en este momento no se puede acceder a las imágenes")
 
-def agregarSwitch():
+def agregarSwitch(lista):
     print(Fore.CYAN+"Creación de su switch:")
-    nombreSW = questionary.text("Ingrese el nombre del switch:").ask()
-    return nombreSW
+    while(True):
+        nombreSW = questionary.text("Ingrese el nombre del switch:").ask()
+        if(nombreSW == ""):
+            print(Fore.RED+"El nombre del switch no debe estar vacío")
+            continue
+        elif(nombreSW in lista):
+            print(Fore.RED+"Este nombre ya se ha usado")
+            continue
+        else:
+            return nombreSW
 
 def generarEnlace(listaVMs, listaSwitches, listaEnlaces):
     listaNombresVMs = [vm['nombre'] for vm in listaVMs]
@@ -44,7 +53,7 @@ def generarEnlace(listaVMs, listaSwitches, listaEnlaces):
     opcion = questionary.select("Elija un tipo de conexión", choices = choicesTiposEnlace).ask()
     if(opcion == "Conectar Switch - Switch"):
         primerSwitch = questionary.select("Seleccionar primer switch", choices = listaSwitches).ask()
-        choicesSegundaOpcion = listaSwitches
+        choicesSegundaOpcion = copy.deepcopy(listaSwitches)
         choicesSegundaOpcion.remove(primerSwitch)
         segundoSwitch = questionary.select("Seleccionar primer switch", choices = choicesSegundaOpcion).ask()
         return (primerSwitch, segundoSwitch)

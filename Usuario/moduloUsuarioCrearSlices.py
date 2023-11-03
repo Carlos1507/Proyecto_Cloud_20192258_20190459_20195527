@@ -3,6 +3,7 @@ from colorama import Fore
 import Usuario.moduloUsuarioGenerRecursos as recurso
 from Recursos.funcionGestionTopologias import graficarTopologia
 from Recursos.funcionGestionTopologias import importarTopolog
+from Recursos.generarTopologiaArbol import generarArbol
 
 def crearSlice(usuarioLog, endpointBase):
     title = "Seleccione un tipo de topología:"
@@ -44,11 +45,10 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
                             ("sw1","sw2"),("sw2", "sw3"),("sw3", "sw4"),("sw4","sw1"),
                             ("sw1","sw3"),("sw2","sw4")]
         elif(opcion=="2. Árbol"):
-            titulo = "Diagrama Topología: Árbol"
-            listaVMs = ["vm1", "vm2", "vm3", "vm4"]
-            listaSWs = ["sw1", "sw2", "sw3", "sw4"]
-            listaEnlaces = [("sw1","vm1"),("sw2","vm2"),("sw3","vm3"),("sw4","vm4"),
-                            ("sw1","sw2"),("sw1","sw3"),("sw1","sw4")]
+            niveles = questionary.text("Ingrese el número de niveles del árbol").ask()
+            hijos = questionary.text("Ingrese el número de hijos por nodo").ask()
+            titulo = "Arbol nivel "+niveles+" con "+hijos+" hijos por nodo"
+            listaEnlaces, listaSWs, listaVMs = generarArbol(int(hijos), int(niveles))
         elif(opcion=="3. Anillo"):
             titulo = "Diagrama Topología: Anillo"
             listaVMs = ["vm1", "vm2", "vm3", "vm4"]
@@ -65,15 +65,10 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
 
         if confirmation:
             graficarTopologia(titulo, listaVMs, listaSWs,listaEnlaces)
-        if opcion == "4. Lineal":
-            VMsDetalladas = [recurso.VM("vm1","1024","2","cirros.img").to_dict(), 
-                             recurso.VM("vm2","1024","2","cirros.img").to_dict(),
-                             recurso.VM("vm3","1024","2","cirros.img").to_dict()]
-        else:
-            VMsDetalladas = [recurso.VM("vm1","1024","2","cirros.img").to_dict(), 
-                             recurso.VM("vm2","1024","2","cirros.img").to_dict(),
-                             recurso.VM("vm3","1024","2","cirros.img").to_dict(),
-                             recurso.VM("vm4","1024","2","cirros.img").to_dict()]
+        VMsDetalladas = []
+        for vm_name in listaVMs:
+            VMsDetalladas.append(recurso.VM(vm_name, "1024", "2", "cirros.img").to_dict())
+
         fecha_actual = datetime.datetime.now()
         nombre = questionary.text("Ingrese un nombre para su slice").ask()
         slice = {"vms": VMsDetalladas, "switches": listaSWs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
@@ -146,16 +141,17 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
         else:
             break
     listaSwitches = []
-    listaSwitches.append(recurso.agregarSwitch())
+    listaSwitches.append(recurso.agregarSwitch(listaSwitches))
     while(True):
         confirmSW = questionary.confirm("¿Desea añadir otro switch?").ask()
         if(confirmSW==True):
-            listaSwitches.append(recurso.agregarSwitch())
+            listaSwitches.append(recurso.agregarSwitch(listaSwitches))
         else:
             break
     listaEnlaces = []
     listaEnlaces.append(recurso.generarEnlace(listaVMs, listaSwitches, listaEnlaces))
     while(True):
+        print(listaSwitches)
         confirmLink = questionary.confirm("¿Desea añadir otro enlace?").ask()
         if(confirmLink==True):
             listaEnlaces.append(recurso.generarEnlace(listaVMs, listaSwitches, listaEnlaces))
