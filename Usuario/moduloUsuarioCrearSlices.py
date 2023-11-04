@@ -4,6 +4,9 @@ import Usuario.moduloUsuarioGenerRecursos as recurso
 from Recursos.funcionGestionTopologias import graficarTopologia
 from Recursos.funcionGestionTopologias import importarTopolog
 from Recursos.generarTopologiaArbol import generarArbol
+from Recursos.generarTopologiaAnillo import generarAnillo
+from Recursos.generarTopologiaMalla import generarMalla
+from Recursos.generarTopologiaLineal import generarLineal
 
 def crearSlice(usuarioLog, endpointBase):
     title = "Seleccione un tipo de topología:"
@@ -37,30 +40,24 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
     if(opcion =="5. Salir"):
         crearSlice(usuarioLog, endpointBase)
     else: 
+        listaEnlaces, listaSWs, listaVMs = [], [], []
         if(opcion=="1. Malla"):
-            titulo = "Diagrama Topología: Malla"
-            listaVMs = ["vm1", "vm2", "vm3", "vm4"]
-            listaSWs = ["sw1", "sw2", "sw3", "sw4"]
-            listaEnlaces = [("sw1","vm1"),("sw2","vm2"),("sw3","vm3"),("sw4","vm4"),
-                            ("sw1","sw2"),("sw2", "sw3"),("sw3", "sw4"),("sw4","sw1"),
-                            ("sw1","sw3"),("sw2","sw4")]
+            numNodos = questionary.text("Ingrese el número de nodos").ask()
+            titulo = "Malla con "+numNodos
+            listaEnlaces, listaSWs, listaVMs = generarMalla(int(numNodos))
         elif(opcion=="2. Árbol"):
             niveles = questionary.text("Ingrese el número de niveles del árbol").ask()
             hijos = questionary.text("Ingrese el número de hijos por nodo").ask()
             titulo = "Arbol nivel "+niveles+" con "+hijos+" hijos por nodo"
             listaEnlaces, listaSWs, listaVMs = generarArbol(int(hijos), int(niveles))
         elif(opcion=="3. Anillo"):
-            titulo = "Diagrama Topología: Anillo"
-            listaVMs = ["vm1", "vm2", "vm3", "vm4"]
-            listaSWs = ["sw1", "sw2", "sw3", "sw4"]
-            listaEnlaces = [("sw1","vm1"),("sw2","vm2"),("sw3","vm3"),("sw4","vm4"),
-                            ("sw1","sw2"),("sw2", "sw3"),("sw3", "sw4"),("sw4","sw1")]
+            numNodos = questionary.text("Ingrese el número de nodos").ask()
+            titulo = "Anillo con "+numNodos
+            listaEnlaces, listaSWs, listaVMs = generarAnillo(int(numNodos))
         elif(opcion=="4. Lineal"):
-            titulo = "Diagrama Topología: Lineal"
-            listaVMs = ["vm1", "vm2", "vm3"]
-            listaSWs = ["sw1", "sw2", "sw3"]
-            listaEnlaces = [("sw1","vm1"),("sw2","vm2"),("sw3","vm3"),
-                            ("sw1","sw2"),("sw2", "sw3")]  
+            numNodos = questionary.text("Ingrese el número de nodos").ask()
+            titulo = "Lineal con "+numNodos
+            listaEnlaces, listaSWs, listaVMs = generarLineal(int(numNodos))
         confirmation = questionary.confirm("¿Desea tener una vista previa?").ask()
 
         if confirmation:
