@@ -26,7 +26,7 @@ def importarTopologia(usuarioLog, endpointBase):
     filename = questionary.path("Seleccionar archivo para importar: ").ask()
     try:
         with open(filename, "r") as archivo:
-            importarTopolog(archivo)
+            importarTopolog(json.load(archivo))
     except FileNotFoundError:
         print(Fore.RED+"El archivo no se encontró")
     except IOError:
