@@ -26,7 +26,8 @@ def graficarTopologia(title, listaVMs, listaSWs, listaEnlaces):
 def importarTopolog(datos):
     fechaCreacion = datos['fecha']
     nombreSlice = datos['nombre']
-    print(datos['vms'])
-    print(datos['switches'])
-    print(datos['enlaces'])
+    nombresVMs = [vm['nombre'] for vm in datos['vms']]
+    nombresSWs = datos['switches']
+    links = datos['enlaces']
+    graficarTopologia("Topología importada: "+nombreSlice+" Creado: "+fechaCreacion, nombresVMs, nombresSWs, links)
     return
