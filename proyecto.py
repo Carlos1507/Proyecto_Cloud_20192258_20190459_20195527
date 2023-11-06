@@ -9,6 +9,8 @@ global usuarioLog
 
 if __name__ == "__main__":
     endpointBase = "http://127.0.0.1:8000"
+    ruta_llave = "venv/headnode"
+    gateway_ip = "10.20.10.221"
     while True:
         print(Fore.CYAN+"Bienvenido al Servicio Cloud: The Cloud Computing Olimpus")
         print(Fore.CYAN+"Por favor ingrese sus credenciales para iniciar sesión en el sistema: ")

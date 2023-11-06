@@ -1,8 +1,8 @@
 import pymysql, paramiko
 from sshtunnel import SSHTunnelForwarder
-
+import proyecto
 # Detalles de la conexión SSH
-ssh_host = '10.20.10.221'
+ssh_host = proyecto.gateway_ip
 ssh_port = 5800
 ssh_user = 'ubuntu'
 ssh_password = 'ubuntu'

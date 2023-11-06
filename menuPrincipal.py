@@ -2,6 +2,7 @@ import questionary
 from Operador.moduloOperadorGestionUsuarios import gestionarUsuarios as gestionUsuarios
 from Operador.moduloOperadorGestionSlices import gestionarSlices as gestionSlices
 from Operador.moduloOperadorGestionImagenes import gestorImagenes as gestionImagenes
+from Operador.moduloOperadorGestionFlavors import gestorFlavors as gestionFlavors
 from Usuario.moduloUsuarioGestionSlices import gestionarSlicesUsuario as gestionSlicesUsuario
 from Operador.moduloOperadorPlataforma import seleccionarPlataforma
 from Operador.moduloOperadorGestionAZ import zonasDisponibilidad
@@ -9,7 +10,7 @@ from Usuario.moduloUsuarioCrearSlices import crearSlice
 
 def menu(usuarioLog, endpointBase):
     if(usuarioLog.rol==1):    # ACCIONES OPERADOR
-        opcionesMenu = ["1. Usuarios", "2. Slices","3. Definir zona de disponibilidad", "4. Selección plataforma","5. Imágenes","Cerrar Sesión"]
+        opcionesMenu = ["1. Usuarios", "2. Slices","3. Definir zona de disponibilidad", "4. Selección plataforma","5. Imágenes","6. Definir flavors","Cerrar Sesión"]
     else:                     # ACCIONES USUARIO
         opcionesMenu = ["1. Crear Slice","2. Listar Slices","Cerrar Sesión"]
     opcion = questionary.select("¿Qué acción desea hacer hoy?", choices=opcionesMenu).ask()
@@ -47,11 +48,17 @@ def menuOperador(usuarioLog, opcion, endpointBase):
         while True:
             opt = seleccionarPlataforma(endpointBase)
             if opt==None: break
-    else:
+    elif(opcion=="5. Imágenes"):
         # Módulo gestionar imágenes
         print("Módulo gestionar imágenes")
         while True:
             opt = gestionImagenes(endpointBase)
+            if opt==None: break
+    else:
+        # Módulo definir flavors
+        print("Módulo definir flavors")
+        while True:
+            opt = gestionFlavors(endpointBase)
             if opt==None: break
     menu(usuarioLog, endpointBase)
     

@@ -1,5 +1,5 @@
 import questionary, requests, json, sys, hashlib
-from colorama import Fore, Style, init
+from colorama import Fore
 global usuarioBD
 global usuarioLog
 class User:
