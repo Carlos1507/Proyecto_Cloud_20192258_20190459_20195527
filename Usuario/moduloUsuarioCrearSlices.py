@@ -2,7 +2,7 @@ import questionary, requests, time, json, datetime
 from colorama import Fore
 import Usuario.moduloUsuarioGenerRecursos as recurso
 from Recursos.funcionGestionTopologias import graficarTopologia
-from Recursos.funcionGestionTopologias import importarTopolog
+from Recursos.funcionGestionTopologias import graficarTopologiaImportada
 from Recursos.generarTopologiaArbol import generarArbol
 from Recursos.generarTopologiaAnillo import generarAnillo
 from Recursos.generarTopologiaMalla import generarMalla
@@ -26,7 +26,12 @@ def importarTopologia(usuarioLog, endpointBase):
     filename = questionary.path("Seleccionar archivo para importar: ").ask()
     try:
         with open(filename, "r") as archivo:
-            importarTopolog(json.load(archivo))
+            print(Fore.CYAN+"Cargando previsualización...")
+            time.sleep(1)
+            graficarTopologiaImportada(json.load(archivo))
+            confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
+            if(confirmationCrear):
+                validarSliceCrearRecursos(usuarioLog, endpointBase, archivo)
     except FileNotFoundError:
         print(Fore.RED+"El archivo no se encontró")
     except IOError:
@@ -71,19 +76,7 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         slice = {"vms": VMsDetalladas, "switches": listaSWs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
         confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
         if(confirmationCrear):
-            if(validarDisponibilidadServidor(usuarioLog, endpointBase)):
-                print(Fore.GREEN+"Servidor disponible, consultando recursos...")
-                if(crearRecursos(usuarioLog, endpointBase, slice)):
-                    print(Fore.GREEN+"Slice creado exitosamente!")
-                    exportarConfirm = questionary.confirm("¿Exportar esta topología?").ask()
-                    if(exportarConfirm):
-                        nombreFile = questionary.text("Ingrese el nombre del archivo (sin extensión): ").ask()
-                        with open(nombreFile+".json", "w") as json_file:
-                            json.dump(slice, json_file)
-                else:
-                    print(Fore.RED+"No hay capacidad para alojar este slice")
-            else:
-                crearSlice(usuarioLog, endpointBase)
+            validarSliceCrearRecursos(usuarioLog, endpointBase, slice)
         else:
             crearSlice(usuarioLog, endpointBase)
 
@@ -176,18 +169,21 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
     slice = {"vms": listaVMs, "switches": listaSwitches, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
     confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
     if(confirmationCrear):
-        if(validarDisponibilidadServidor(usuarioLog, endpointBase)):
-            print(Fore.GREEN+"Servidor disponible, consultando recursos...")
-            if(crearRecursos(usuarioLog, endpointBase, slice)):
-                print(Fore.GREEN+"Slice creado exitosamente!")
-                exportarConfirm = questionary.confirm("¿Exportar esta topología?").ask()
-                if(exportarConfirm):
-                    nombreFile = questionary.text("Ingrese el nombre del archivo (sin extensión): ").ask()
-                    with open(nombreFile+".json", "w") as json_file:
-                        json.dump(slice, json_file)
-            else:
-                print(Fore.RED+"No hay capacidad para alojar este slice")
+        validarSliceCrearRecursos(usuarioLog, endpointBase)
+    else:
+        crearSlice(usuarioLog, endpointBase)
+
+def validarSliceCrearRecursos(usuarioLog, endpointBase, slice):
+    if(validarDisponibilidadServidor(usuarioLog, endpointBase)):
+        print(Fore.GREEN+"Servidor disponible, consultando recursos...")
+        if(crearRecursos(usuarioLog, endpointBase, slice)):
+            print(Fore.GREEN+"Slice creado exitosamente!")
+            exportarConfirm = questionary.confirm("¿Exportar esta topología?").ask()
+            if(exportarConfirm):
+                nombreFile = questionary.text("Ingrese el nombre del archivo (sin extensión): ").ask()
+                with open(nombreFile+".json", "w") as json_file:
+                    json.dump(slice, json_file)
         else:
-            crearSlice(usuarioLog, endpointBase)
+            print(Fore.RED+"No hay capacidad para alojar este slice")
     else:
         crearSlice(usuarioLog, endpointBase)

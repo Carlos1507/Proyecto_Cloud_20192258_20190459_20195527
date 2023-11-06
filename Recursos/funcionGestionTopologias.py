@@ -23,7 +23,7 @@ def graficarTopologia(title, listaVMs, listaSWs, listaEnlaces):
 
     ax.set_title(title)
     plt.show()
-def importarTopolog(datos):
+def graficarTopologiaImportada(datos):
     fechaCreacion = datos['fecha']
     nombreSlice = datos['nombre']
     nombresVMs = [vm['nombre'] for vm in datos['vms']]
