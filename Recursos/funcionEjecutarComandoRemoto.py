@@ -7,7 +7,7 @@ def execRemoto(command, host):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         client.connect(host, "5800", username,password
-                       #, key_filename="headnode"
+                       , key_filename="venv/headkey"
                        )
         _stdin, _stdout, _stderr = client.exec_command(command)
         output = _stdout.read().decode().strip()

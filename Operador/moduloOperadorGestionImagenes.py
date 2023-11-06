@@ -26,7 +26,7 @@ def agregarImagen(endpointBase):
     filename = questionary.path("Seleccionar archivo: ").ask()
     try:
         with open(filename, "r") as archivo:
-            enviarSCP(filename, 'ubuntu', "10.20.10.221", '/home/ubuntu/imagenes', 5800, "venv/headnode")
+            enviarSCP(filename, 'ubuntu', "10.20.10.221", '/home/ubuntu/imagenes', 5800, "venv/headkey")
 
             response = requests.post(url = endpointBase+ "/agregarImagen", 
                                         headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":filename}))

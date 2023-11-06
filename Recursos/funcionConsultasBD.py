@@ -6,7 +6,7 @@ ssh_host = "10.20.10.221"
 ssh_port = 5800
 ssh_user = 'ubuntu'
 ssh_password = 'ubuntu'
-# ssh_key_path = 'venv/headnode'
+ssh_key_path = 'venv/headkey'
 
 # Detalles de la conexión MySQL a través del túnel SSH
 mysql_port = 4000
