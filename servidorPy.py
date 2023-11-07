@@ -2,7 +2,8 @@
 from fastapi import FastAPI, Request
 from typing import Optional
 from pydantic import BaseModel
-import random, platform, json
+from fastapi.responses import HTMLResponse
+import random, platform, json, os
 from resourceManager import validarRecursosDisponibles
 from vmPlacement import crearSlice
 
@@ -44,6 +45,22 @@ async def hello():
     global slicesUsuarios
     print(slicesUsuarios)
     return {"result":"hello world from remote node"}
+
+@app.get("/log")
+async def log():
+    try:
+        filename = "salida.log"
+        if os.path.exists(filename):
+            with open(filename, "r") as archivo:
+                contenido = archivo.read()
+                contenido_html = contenido.replace("\n", "<br>")
+            return HTMLResponse(content=contenido_html)
+        else:
+            return HTMLResponse(content="<p>El archivo no se encontró</p>", status_code=404)
+    except FileNotFoundError:
+        return HTMLResponse(content="<p>El archivo no se encontró</p>", status_code=404)
+    except IOError:
+        return HTMLResponse(content="<p>Ocurrió un error al intentar abrir el archivo</p>", status_code=500)
 
 @app.get("/disponible/{idUser}")
 async def disponibleValidar(idUser: int):
