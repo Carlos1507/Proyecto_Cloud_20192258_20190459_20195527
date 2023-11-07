@@ -26,7 +26,9 @@ class UserValidation(BaseModel):
 
 class Imagen(BaseModel):
     nombre: str
+    filename: Optional[str] = None
     VMs_idRecursos: Optional[int] = None
+
 class AZsConf(BaseModel):
     azs: list
 
@@ -166,7 +168,7 @@ async def eliminarImagen(idImagen: str):
 async def agregarImagen(imagen: Imagen):
     print(imagen)
     try:
-        ejecutarConsultaSQL("INSERT INTO imagenes (nombre) VALUES (%s)", (imagen.nombre,))
+        ejecutarConsultaSQL("INSERT INTO imagenes (nombre, filename) VALUES (%s, %s)", (imagen.nombre,imagen.filename))
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}

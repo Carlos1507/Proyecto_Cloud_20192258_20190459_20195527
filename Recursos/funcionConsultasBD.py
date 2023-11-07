@@ -1,6 +1,6 @@
 import pymysql, paramiko
 from sshtunnel import SSHTunnelForwarder
-import proyecto
+
 # Detalles de la conexión SSH
 ssh_host = "10.20.10.221"
 ssh_port = 5800

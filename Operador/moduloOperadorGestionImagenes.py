@@ -1,9 +1,10 @@
-import questionary, requests, json
+import questionary, requests, json, os
 from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
 from Recursos.funcionEnviarArchivoSCP import enviarSCP
 from Recursos.funcionEjecutarComandoRemoto import execRemoto
+import Operador.moduloOperadorGestionFlavors as gestionFlavors
 
 console = Console()
 
@@ -27,9 +28,10 @@ def agregarImagen(endpointBase):
     try:
         with open(filename, "r") as archivo:
             enviarSCP(filename, 'ubuntu', "10.20.10.221", '/home/ubuntu/imagenes', 5800, "venv/headkey")
-
+            nombreArchivo = questionary.text("Ingrese nombre para su imagen").ask()
             response = requests.post(url = endpointBase+ "/agregarImagen", 
-                                        headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":filename}))
+                                        headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":nombreArchivo,"filename":os.path.basename(filename)}))
+            gestionFlavors.gestorImagenesGlance(endpointBase, nombreArchivo, os.path.basename(filename))
             if(response.status_code==200 and response.json()['result']=="Correcto"):
                 print(Fore.GREEN+"Imagen agregada exitosamente")
             else:

@@ -2,7 +2,7 @@ import questionary
 from Operador.moduloOperadorGestionUsuarios import gestionarUsuarios as gestionUsuarios
 from Operador.moduloOperadorGestionSlices import gestionarSlices as gestionSlices
 from Operador.moduloOperadorGestionImagenes import gestorImagenes as gestionImagenes
-from Operador.moduloOperadorGestionFlavors import gestorFlavors as gestionFlavors
+
 from Usuario.moduloUsuarioGestionSlices import gestionarSlicesUsuario as gestionSlicesUsuario
 from Operador.moduloOperadorPlataforma import seleccionarPlataforma
 from Operador.moduloOperadorGestionAZ import zonasDisponibilidad
@@ -58,7 +58,7 @@ def menuOperador(usuarioLog, opcion, endpointBase):
         # Módulo definir flavors
         print("Módulo definir flavors")
         while True:
-            opt = gestionFlavors(endpointBase)
+            opt = None
             if opt==None: break
     menu(usuarioLog, endpointBase)
     
