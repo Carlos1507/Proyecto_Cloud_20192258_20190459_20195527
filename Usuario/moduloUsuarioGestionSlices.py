@@ -13,8 +13,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
         table.add_column("N°",justify="center")
         table.add_column("Nombre",justify="center")
         table.add_column("Fecha", justify="left")
-        table.add_column("Número VMs", justify="lef")
-        table.add_column("Número switches", justify="left")
+        table.add_column("Número Nodos", justify="lef")
         table.add_column("Número enlaces", justify="left")
         index = 1
         nombresSlices = []
@@ -24,9 +23,8 @@ def gestionarSlicesUsuario(usuario, endpointBase):
             nombresSlices.append(nombre)
             fecha = slice[idUser]['fecha']
             numVMs = str(len(slice[idUser]['vms']))
-            numSWs = str(len(slice[idUser]['switches']))
             numLinks = str(len(slice[idUser]['enlaces']))
-            table.add_row(str(index), nombre, fecha, numVMs, numSWs,numLinks)
+            table.add_row(str(index), nombre, fecha, numVMs,numLinks)
             index+=1
         console.print(table)
         responseConfirm = questionary.confirm("¿Desea eliminar algún Slice?").ask()

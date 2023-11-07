@@ -28,10 +28,10 @@ def importarTopologia(usuarioLog, endpointBase):
         with open(filename, "r") as archivo:
             print(Fore.CYAN+"Cargando previsualización...")
             time.sleep(1)
-            graficarTopologiaImportada(json.load(archivo))
+            jsonfile = graficarTopologiaImportada(json.load(archivo))
             confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
             if(confirmationCrear):
-                validarSliceCrearRecursos(usuarioLog, endpointBase, archivo)
+                validarSliceCrearRecursos(usuarioLog, endpointBase, jsonfile)
     except FileNotFoundError:
         print(Fore.RED+"El archivo no se encontró")
     except IOError:
@@ -45,35 +45,35 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
     if(opcion =="5. Salir"):
         crearSlice(usuarioLog, endpointBase)
     else: 
-        listaEnlaces, listaSWs, listaVMs = [], [], []
+        listaEnlaces, listaNodos = [], []
         if(opcion=="1. Malla"):
             numNodos = questionary.text("Ingrese el número de nodos").ask()
             titulo = "Malla con "+numNodos
-            listaEnlaces, listaSWs, listaVMs = generarMalla(int(numNodos))
+            listaEnlaces, listaNodos = generarMalla(int(numNodos))
         elif(opcion=="2. Árbol"):
             niveles = questionary.text("Ingrese el número de niveles del árbol").ask()
             hijos = questionary.text("Ingrese el número de hijos por nodo").ask()
             titulo = "Arbol nivel "+niveles+" con "+hijos+" hijos por nodo"
-            listaEnlaces, listaSWs, listaVMs = generarArbol(int(hijos), int(niveles))
+            listaEnlaces, listaNodos = generarArbol(int(hijos), int(niveles))
         elif(opcion=="3. Anillo"):
             numNodos = questionary.text("Ingrese el número de nodos").ask()
             titulo = "Anillo con "+numNodos
-            listaEnlaces, listaSWs, listaVMs = generarAnillo(int(numNodos))
+            listaEnlaces, listaNodos = generarAnillo(int(numNodos))
         elif(opcion=="4. Lineal"):
             numNodos = questionary.text("Ingrese el número de nodos").ask()
             titulo = "Lineal con "+numNodos
-            listaEnlaces, listaSWs, listaVMs = generarLineal(int(numNodos))
+            listaEnlaces, listaNodos = generarLineal(int(numNodos))
         confirmation = questionary.confirm("¿Desea tener una vista previa?").ask()
 
         if confirmation:
-            graficarTopologia(titulo, listaVMs, listaSWs,listaEnlaces)
+            graficarTopologia(titulo, listaNodos, listaEnlaces)
         VMsDetalladas = []
-        for vm_name in listaVMs:
+        for vm_name in listaNodos:
             VMsDetalladas.append(recurso.VM(vm_name, "1024", "2", "cirros.img").to_dict())
 
         fecha_actual = datetime.datetime.now()
         nombre = questionary.text("Ingrese un nombre para su slice").ask()
-        slice = {"vms": VMsDetalladas, "switches": listaSWs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
+        slice = {"vms": VMsDetalladas, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
         confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
         if(confirmationCrear):
             validarSliceCrearRecursos(usuarioLog, endpointBase, slice)
@@ -105,6 +105,7 @@ def validarDisponibilidadServidor(usuarioLog, endpointBase):
             return False
 
 def crearRecursos(usuarioLog, endpointBase, data):
+    print(data)
     response = requests.post(url = endpointBase+"/validacionRecursos/"+str(usuarioLog.idUser), 
                                 headers = {"Content-Type": "application/json"}, data=json.dumps(data))
     if(response.status_code == 200):
@@ -120,9 +121,10 @@ def crearRecursos(usuarioLog, endpointBase, data):
 
 def topologiaPersonalizada(usuarioLog, endpointBase):
     print(Fore.CYAN+"Usted está empezando con la creación de su topología...")
-    print(Fore.CYAN+"Agregue al menos 1 VM, 1 Switch y 1 enlace")
+    print(Fore.CYAN+"Agregue al menos 2 VM y 1 enlace")
     print(Fore.CYAN+"Añada sus Máquinas virtuales...")
     listaVMs = []
+    listaVMs.append(recurso.agregarVM(endpointBase))
     listaVMs.append(recurso.agregarVM(endpointBase))
     while(True):
         confirmVM = questionary.confirm("¿Desea añadir otra VM?").ask()
@@ -130,46 +132,38 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
             listaVMs.append(recurso.agregarVM(endpointBase))
         else:
             break
-    listaSwitches = []
-    listaSwitches.append(recurso.agregarSwitch(listaSwitches))
-    while(True):
-        confirmSW = questionary.confirm("¿Desea añadir otro switch?").ask()
-        if(confirmSW==True):
-            listaSwitches.append(recurso.agregarSwitch(listaSwitches))
-        else:
-            break
     listaEnlaces = []
-    listaEnlaces.append(recurso.generarEnlace(listaVMs, listaSwitches, listaEnlaces))
+    listaEnlaces.append(recurso.generarEnlace(listaVMs, listaEnlaces))
     while(True):
-        print(listaSwitches)
         confirmLink = questionary.confirm("¿Desea añadir otro enlace?").ask()
         if(confirmLink==True):
-            listaEnlaces.append(recurso.generarEnlace(listaVMs, listaSwitches, listaEnlaces))
+            vm1, vm2 = recurso.generarEnlace(listaVMs, listaEnlaces)
+            if ((vm1 is not None) and (vm2 is not None)):
+                listaEnlaces.append((vm1, vm2))
+            else:
+                continue
         else:
-            dispositivosLibres = recurso.dispositivosNoConectados(listaVMs, listaSwitches, listaEnlaces)
-            if((len(dispositivosLibres[0])==0) and (len(dispositivosLibres[1])==0)):
+            dispositivosLibres = recurso.dispositivosNoConectados(listaVMs, listaEnlaces)
+            if (len(dispositivosLibres)==0):
                 break
             else:
                 print(Fore.RED+"No ha conectado todos sus dispositivos")
-                vms_sin_conectar = dispositivosLibres[0]
+                vms_sin_conectar = dispositivosLibres
                 for vm in vms_sin_conectar:
-                    print(Fore.RED+"VM sin conectar: "+vm)
-                switches_sin_conectar = dispositivosLibres[1]
-                for switch in switches_sin_conectar:
-                    print(Fore.RED+"Switch sin conectar: "+switch)
+                    print(Fore.RED+"Nodo sin conectar: "+vm)
                 continue
     confirmation = questionary.confirm("¿Desea tener una vista previa?").ask()
-    listaSWsNombres = []
+    listaVMsNombres = []
     for vm in listaVMs:
-        listaSWsNombres.append(vm['nombre'])
+        listaVMsNombres.append(vm['nombre'])
     if confirmation:
-        graficarTopologia("Diagrama Topología", listaSWsNombres, listaSwitches,listaEnlaces)
+        graficarTopologia("Diagrama Topología", listaVMsNombres,listaEnlaces)
     fecha_actual = datetime.datetime.now()
     nombre = questionary.text("Ingrese un nombre para su slice").ask()
-    slice = {"vms": listaVMs, "switches": listaSwitches, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
+    slice = {"vms": listaVMs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
     confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
     if(confirmationCrear):
-        validarSliceCrearRecursos(usuarioLog, endpointBase)
+        validarSliceCrearRecursos(usuarioLog, endpointBase, slice)
     else:
         crearSlice(usuarioLog, endpointBase)
 

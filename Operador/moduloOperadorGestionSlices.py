@@ -14,8 +14,7 @@ def gestionarSlices(usuario, endpointBase):
         table.add_column("idUser", justify="right")
         table.add_column("Nombre",justify="center")
         table.add_column("Fecha", justify="left")
-        table.add_column("Número VMs", justify="lef")
-        table.add_column("Número switches", justify="left")
+        table.add_column("Número VMs", justify="left")
         table.add_column("Número enlaces", justify="left")
         
         for slice in slices:
@@ -23,9 +22,8 @@ def gestionarSlices(usuario, endpointBase):
             nombre = slice[idUser]['nombre']
             fecha = slice[idUser]['fecha']
             numVMs = str(len(slice[idUser]['vms']))
-            numSWs = str(len(slice[idUser]['switches']))
             numLinks = str(len(slice[idUser]['enlaces']))
-            table.add_row(str(idUser), nombre, fecha, numVMs, numSWs,numLinks)
+            table.add_row(str(idUser), nombre, fecha, numVMs, numLinks)
         console.print(table)
     else:
         print(Fore.RED + "Error en el servidor")

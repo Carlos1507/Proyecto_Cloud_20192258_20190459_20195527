@@ -1,0 +1,1 @@
+{"vms": [{"nombre": "vm1", "capacidad": "1000", "cpu": "2", "imagen": "aaaaaaaaaaaaaaaaaaaaa"}, {"nombre": "vm2", "capacidad": "400", "cpu": "1", "imagen": "cirros-image.img"}], "enlaces": [["vm1", "vm2"]], "nombre": "p2p", "fecha": "07/11/2023"}

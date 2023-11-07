@@ -20,7 +20,7 @@ def agregarVM(endpointBase):
     print(Fore.CYAN+"Creación de su máquina virtual:")
     nombreVM = questionary.text("Ingrese el nombre de la VM:").ask()
     capacidadVM = questionary.text("Ingrese la capacidad (Tamaño disco) en MB:").ask()
-    cpuVM = questionary.text("Ingres el número de cores para la VM (CPUs)").ask()
+    cpuVM = questionary.text("Ingrese el número de cores para la VM (CPUs)").ask()
     response = requests.get(url = endpointBase+"/allImagenes", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
@@ -31,44 +31,29 @@ def agregarVM(endpointBase):
     else:
         print(Fore.RED + "Error en el servidor, en este momento no se puede acceder a las imágenes")
 
-def agregarSwitch(lista):
-    print(Fore.CYAN+"Creación de su switch:")
-    while(True):
-        nombreSW = questionary.text("Ingrese el nombre del switch:").ask()
-        if(nombreSW == ""):
-            print(Fore.RED+"El nombre del switch no debe estar vacío")
-            continue
-        elif(nombreSW in lista):
-            print(Fore.RED+"Este nombre ya se ha usado")
-            continue
+def generarEnlace(listaVMs, listaEnlaces):
+    listaNombresVMs = [vm['nombre'] for vm in listaVMs]
+    print(Fore.CYAN+"Conecte sus dispositivos")
+    primeraVM = questionary.select("Seleccionar primer nodo", choices = listaNombresVMs).ask()
+    choicesSegundaOpcion = copy.deepcopy(listaNombresVMs)
+    choicesSegundaOpcion.remove(primeraVM)
+    segundaVM = questionary.select("Seleccionar segundo nodo", choices = choicesSegundaOpcion).ask()
+    if(((primeraVM, segundaVM) or (segundaVM, primeraVM) ) in listaEnlaces):
+        print(Fore.CYAN+"Este enlace ya ha sido generado")
+        if(len(listaEnlaces)==0):
+            generarEnlace(listaVMs, listaEnlaces)
         else:
-            return nombreSW
-
-def generarEnlace(listaVMs, listaSwitches, listaEnlaces):
-    listaNombresVMs = [vm['nombre'] for vm in listaVMs]
-    if(len(listaSwitches)>=2):
-        choicesTiposEnlace = ["Conectar Switch - Switch", "Conectar Switch - Máquina virtual"]
+            return (None, None)
     else:
-        choicesTiposEnlace = ["Conectar Switch - Máquina virtual"]
-    opcion = questionary.select("Elija un tipo de conexión", choices = choicesTiposEnlace).ask()
-    if(opcion == "Conectar Switch - Switch"):
-        primerSwitch = questionary.select("Seleccionar primer switch", choices = listaSwitches).ask()
-        choicesSegundaOpcion = copy.deepcopy(listaSwitches)
-        choicesSegundaOpcion.remove(primerSwitch)
-        segundoSwitch = questionary.select("Seleccionar primer switch", choices = choicesSegundaOpcion).ask()
-        return (primerSwitch, segundoSwitch)
-    elif(opcion == "Conectar Switch - Máquina virtual"):
-        switch = questionary.select("Seleccionar switch", choices = listaSwitches).ask()
-        vm = questionary.select("Seleccionar VM", choices = listaNombresVMs).ask()
-        return (switch, vm)
-
-def dispositivosNoConectados(listaVMs, listaSwitches, listaEnlaces):
+        return (primeraVM, segundaVM)
+    
+def dispositivosNoConectados(listaVMs, listaEnlaces):
     listaNombresVMs = [vm['nombre'] for vm in listaVMs]
-    conjunto_tuplas = set()
-    conjunto_vms = set(listaNombresVMs)
-    conjunto_switches = set(listaSwitches)
+    vms_utilizadas  = set()
     for tupla in listaEnlaces:
-        conjunto_tuplas.update(tupla)
-    vms_sin_enlace = conjunto_vms - conjunto_tuplas
-    switches_sin_enlace = conjunto_switches - conjunto_tuplas
-    return (list(vms_sin_enlace), list(switches_sin_enlace))
+        vms_utilizadas.update(tupla)
+    vms_faltantes = []
+    for vm in listaNombresVMs:
+        if vm not in vms_utilizadas:
+            vms_faltantes.append(vm)
+    return vms_faltantes

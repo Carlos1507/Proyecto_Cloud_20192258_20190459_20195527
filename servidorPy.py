@@ -35,7 +35,7 @@ class AZsConf(BaseModel):
 app = FastAPI()
 
 plataformaEnUso = ""
-slicesUsuarios = [{3: {'vms': [{'nombre': 'vm1', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm2', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm3', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm4', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}], 'switches': ['sw1', 'sw2', 'sw3', 'sw4'], 'enlaces': [['sw1', 'vm1'], ['sw2', 'vm2'], ['sw3', 'vm3'], ['sw4', 'vm4'], ['sw1', 'sw2'], ['sw2', 'sw3'], ['sw3', 'sw4'], ['sw4', 'sw1'], ['sw1', 'sw3'], ['sw2', 'sw4']], 'nombre': 'Prueba', 'fecha': '09/10/2023'}}]  
+slicesUsuarios = [{3: {'vms': [{'nombre': 'vm1', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm2', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm3', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm4', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}], 'enlaces': [['vm4', 'vm1'], ['vm1', 'vm3'], ['vm2', 'vm1']], 'nombre': 'Prueba', 'fecha': '09/10/2023'}}]  
 disponible = True
 usuarioEnAtencion = 0
 
