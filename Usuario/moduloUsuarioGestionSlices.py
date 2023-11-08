@@ -1,7 +1,9 @@
+import questionary, requests, time, json, datetime
 from rich.console import Console
 from rich.table import Table
 import requests, questionary, json
 from colorama import Fore, Style, init
+from Recursos.funcionGestionTopologias import graficarTopologiaImportada
 console = Console()
 
 def gestionarSlicesUsuario(usuario, endpointBase):
@@ -27,16 +29,54 @@ def gestionarSlicesUsuario(usuario, endpointBase):
             table.add_row(str(index), nombre, fecha, numVMs,numLinks)
             index+=1
         console.print(table)
-        responseConfirm = questionary.confirm("¿Desea eliminar algún Slice?").ask()
-
-        if(responseConfirm):
-            opcionesGestion = ["a. Editar Slices","b. Eliminar Slices","Regresar"]
-            opcion = questionary.select("¿Qué acción desea hacer hoy?", choices=opcionesGestion).ask()
-            if(opcion == "Cerrar Sesión"):
-                return
+        opcionesGestion = ["a. Editar Slices","b. Eliminar Slices","Regresar"]
+        opcion = questionary.select("¿Desea editar o eliminar slices?", choices=opcionesGestion).ask()
+        if(opcion == "Regresar"):
+            return
+        else:
+            if(opcion=="b. Eliminar Slices"):
+                nombreSlice = questionary.select("¿Cuál desea eliminar?", choices=nombresSlices).ask()
+                for slice in slices:
+                    idUser = next(iter(slice.keys()))
+                    nombre = slice[idUser]['nombre']
+                    if nombre == nombreSlice:
+                        data = slice
+                        break
+                response = requests.post(url = endpointBase+"/eliminarSlice/"+str(usuario.idUser), 
+                                    headers = {"Content-Type": "application/json"}, data=json.dumps(data))
+                if(response.status_code==200):
+                    respuesta = response.json()['result']
+                    if(respuesta == "Eliminado con éxito"):
+                        print(Fore.RED+"Slice eliminado")
             else:
-                print("")
-            
+                nombreSlice = questionary.select("¿Cuál desea editar?", choices=nombresSlices).ask()
+                for slice in slices:
+                    idUser = next(iter(slice.keys()))
+                    nombre = slice[idUser]['nombre']
+                    if nombre == nombreSlice:
+                        data = slice
+                        break
+                slice_data = list(data.values())[0] #Es un diccionario
+                print(Fore.CYAN+"Cargando previsualización...")
+                time.sleep(1)
+                graficarTopologiaImportada(slice_data)
+                opcionesEditar = ["1. Eliminar VM","2. Agregar VM","Regresar"]
+                opcion = questionary.select("¿Que acción realizará?", choices=opcionesEditar).ask()
+                if(opcion == "Regresar"):
+                    return
+                else:
+                    if(opcion=="1. Eliminar VM"):
+                        slice_data_copia = slice_data
+                        nombre_vm_a_eliminar = input("Ingrese el nombre de la VM a eliminar: ")
+                        vms = slice_data_copia['vms']
+                        enlaces = slice_data_copia['enlaces']
+                        nueva_lista_vms = [vm for vm in vms if vm['nombre'] != nombre_vm_a_eliminar]
+                        nuevos_enlaces = [enlace for enlace in enlaces if nombre_vm_a_eliminar not in enlace]
+                        slice_data_copia['vms'] = nueva_lista_vms
+                        slice_data_copia['enlaces'] = nuevos_enlaces
+                        print(Fore.CYAN+"Cargando previsualización...")
+                        time.sleep(1)
+                        graficarTopologiaImportada(slice_data_copia)
     else:
         print(Fore.RED + "Error en el servidor")
     return
