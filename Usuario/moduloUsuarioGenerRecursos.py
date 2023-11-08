@@ -3,23 +3,26 @@ from colorama import Fore
 import copy
 
 class VM:
-    def __init__(self, nombre, capacidad, cpu, imagen):
+    def __init__(self, nombre, ram, cpu, disk, imagen):
         self.nombre = nombre
-        self.capacidad = capacidad
+        self.ram = ram
         self.cpu = cpu
+        self.disk = disk
         self.imagen = imagen
     def to_dict(self):
         return {
             'nombre': self.nombre,
-            'capacidad': self.capacidad,
+            'ram': self.ram,
             'cpu': self.cpu,
+            'disk': self.disk,
             'imagen': self.imagen
         }
 
 def agregarVM(endpointBase):
     print(Fore.CYAN+"Creación de su máquina virtual:")
     nombreVM = questionary.text("Ingrese el nombre de la VM:").ask()
-    capacidadVM = questionary.text("Ingrese la capacidad (Tamaño disco) en MB:").ask()
+    ramVM = questionary.text("Ingrese el tamaño de la ram en MB:").ask()
+    diskVM = questionary.text("Ingrese el tamaño del disco en GB:").ask()
     cpuVM = questionary.text("Ingrese el número de cores para la VM (CPUs)").ask()
     response = requests.get(url = endpointBase+"/allImagenes", 
                                 headers = {"Content-Type": "application/json"})
@@ -27,7 +30,7 @@ def agregarVM(endpointBase):
         imagenes = response.json()['result']
         imagenesNombres = [imagen[1] for imagen in imagenes]
         imagenNombre = questionary.select("Seleccione una de las imágenes disponibles:", choices = imagenesNombres).ask()
-        return VM(nombreVM, capacidadVM, cpuVM, imagenNombre).to_dict()   
+        return VM(nombreVM, ramVM, cpuVM, diskVM, imagenNombre).to_dict()   
     else:
         print(Fore.RED + "Error en el servidor, en este momento no se puede acceder a las imágenes")
 

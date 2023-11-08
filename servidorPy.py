@@ -21,6 +21,14 @@ class Usuario(BaseModel):
     flagAZ: bool
     Roles_idRoles: int
 
+class Flavor(BaseModel):
+    idflavors: Optional[int] = None
+    ram_mb: float
+    disk_gb: float
+    cpus: int
+    nombre: str
+    idflavorglance: Optional[str] = None
+
 class UserValidation(BaseModel):
     username: str
     password: str
@@ -110,6 +118,16 @@ async def validate_password(uservalid: UserValidation):
     else:
         return {"result":"Incorrecto"}
     
+@app.post("/saveFlavor")
+async def saveFlavor(flavor: Flavor):
+    try:
+        result = ejecutarConsultaSQL("INSERT INTO flavors (ram_mb, disk_gb, cpus, nombre, idflavorglance) VALUES (%s, %s, %s, %s, %s)",
+                            (flavor.ram_mb, flavor.disk_gb, flavor.cpus, flavor.nombre, flavor.idflavorglance))
+        return {"result":"Correcto"}
+    except Exception as e:
+        print("Error: ", e)
+        return {"result":"Error"}
+
 @app.get("/allUsers")
 async def allUsers():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())

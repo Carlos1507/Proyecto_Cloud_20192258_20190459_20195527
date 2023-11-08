@@ -17,6 +17,8 @@ def execRemoto(command, host):
         print(f"Comando ejecutado: {command}")
         print(f"Resultado: {output}")
         print(f"Error: {error}")
+        if("openstack" in comandos[1]):
+            return output
     except Exception as e:
         print(f"Error {str(e)}")
     finally:

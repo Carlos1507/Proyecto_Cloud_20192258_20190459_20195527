@@ -1,6 +1,7 @@
 import questionary, requests, json, os
 from rich.console import Console
 from rich.table import Table
+import Recursos.funcionEjecutarComandoRemoto as ejecutarComando
 from colorama import Fore, Style, init
 from Recursos.funcionEnviarArchivoSCP import enviarSCP
 from Recursos.funcionEjecutarComandoRemoto import execRemoto
@@ -29,13 +30,17 @@ def agregarImagen(endpointBase):
         with open(filename, "r") as archivo:
             enviarSCP(filename, 'ubuntu', "10.20.10.221", '/home/ubuntu/imagenes', 5800, "venv/headkey")
             nombreArchivo = questionary.text("Ingrese nombre para su imagen").ask()
-            response = requests.post(url = endpointBase+ "/agregarImagen", 
-                                        headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":nombreArchivo,"filename":os.path.basename(filename)}))
-            gestionFlavors.gestorImagenesGlance(endpointBase, nombreArchivo, os.path.basename(filename))
-            if(response.status_code==200 and response.json()['result']=="Correcto"):
-                print(Fore.GREEN+"Imagen agregada exitosamente")
+            if(gestionFlavors.gestorImagenesGlance(endpointBase, nombreArchivo, os.path.basename(filename)) == True):
+                IDImagencomando = f"openstack image list --name {nombreArchivo} -c ID -f value"
+                ejecutarComando.execRemoto(IDImagencomando, "10.20.10.221")
+                response = requests.post(url = endpointBase+ "/agregarImagen", 
+                                            headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":nombreArchivo,"filename":os.path.basename(filename)}))
+                if(response.status_code==200 and response.json()['result']=="Correcto"):
+                    print(Fore.GREEN+"Imagen agregada exitosamente")
+                else:
+                    print(Fore.RED+"Error en el servidor")
             else:
-                print(Fore.RED+"Error en el servidor")
+                print(Fore.RED+"Error al guardar imagen")
     except FileNotFoundError:
         print(Fore.RED+"El archivo no se encontró")
     except IOError:
