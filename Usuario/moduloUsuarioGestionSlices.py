@@ -60,7 +60,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                 print(Fore.CYAN+"Cargando previsualización...")
                 time.sleep(1)
                 graficarTopologiaImportada(slice_data)
-                opcionesEditar = ["1. Eliminar VM","2. Agregar VM","Regresar"]
+                opcionesEditar = ["1. Eliminar VM","2. Eliminar Enlace","Regresar"]
                 opcion = questionary.select("¿Que acción realizará?", choices=opcionesEditar).ask()
                 if(opcion == "Regresar"):
                     return
@@ -84,6 +84,9 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                                 print(Fore.CYAN+"Cargando previsualización...")
                                 time.sleep(1)
                                 graficarTopologiaImportada(slice_data_copia)
+                                if len(slice_data_copia['vms']) == 1:
+                                    print(Fore.RED + "Solo queda una VM. No se pueden eliminar más.")
+                                    break
                             else:
                                 print(Fore.RED + "Nombre de VM no encontrado. Intente nuevamente.")
 
