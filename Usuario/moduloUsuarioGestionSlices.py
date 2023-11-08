@@ -67,16 +67,32 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                 else:
                     if(opcion=="1. Eliminar VM"):
                         slice_data_copia = slice_data
-                        nombre_vm_a_eliminar = input("Ingrese el nombre de la VM a eliminar: ")
-                        vms = slice_data_copia['vms']
-                        enlaces = slice_data_copia['enlaces']
-                        nueva_lista_vms = [vm for vm in vms if vm['nombre'] != nombre_vm_a_eliminar]
-                        nuevos_enlaces = [enlace for enlace in enlaces if nombre_vm_a_eliminar not in enlace]
-                        slice_data_copia['vms'] = nueva_lista_vms
-                        slice_data_copia['enlaces'] = nuevos_enlaces
-                        print(Fore.CYAN+"Cargando previsualización...")
-                        time.sleep(1)
-                        graficarTopologiaImportada(slice_data_copia)
+                        while True:
+                            nombre_vm_a_eliminar = input("Ingrese el nombre de la VM a eliminar (o '0' para terminar): ")
+                            if nombre_vm_a_eliminar.lower() == '0':
+                                break
+                            vms = slice_data_copia['vms']
+                            enlaces = slice_data_copia['enlaces']
+
+                            vm_existente = next((vm for vm in vms if vm['nombre'] == nombre_vm_a_eliminar), None)
+
+                            if vm_existente is not None:
+                                nueva_lista_vms = [vm for vm in vms if vm['nombre'] != nombre_vm_a_eliminar]
+                                nuevos_enlaces = [enlace for enlace in enlaces if nombre_vm_a_eliminar not in enlace]
+                                slice_data_copia['vms'] = nueva_lista_vms
+                                slice_data_copia['enlaces'] = nuevos_enlaces
+                                print(Fore.CYAN+"Cargando previsualización...")
+                                time.sleep(1)
+                                graficarTopologiaImportada(slice_data_copia)
+                            else:
+                                print(Fore.RED + "Nombre de VM no encontrado. Intente nuevamente.")
+
+                        confirmEditar = questionary.confirm("¿Desea guardar los cambios?").ask()
+                        if(confirmEditar):
+                            print(Fore.CYAN+"Guardando cambios ...")
+                            time.sleep(1)
+                            # Poner el web service
+                            print(Fore.GREEN+"Edición exitosa")
     else:
         print(Fore.RED + "Error en el servidor")
     return
