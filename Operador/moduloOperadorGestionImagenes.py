@@ -32,9 +32,9 @@ def agregarImagen(endpointBase):
             nombreArchivo = questionary.text("Ingrese nombre para su imagen").ask()
             if(gestionFlavors.gestorImagenesGlance(endpointBase, nombreArchivo, os.path.basename(filename)) == True):
                 IDImagencomando = f"openstack image list --name {nombreArchivo} -c ID -f value"
-                ejecutarComando.execRemoto(IDImagencomando, "10.20.10.221")
+                idImagen = ejecutarComando.execRemoto(IDImagencomando, "10.20.10.221")
                 response = requests.post(url = endpointBase+ "/agregarImagen", 
-                                            headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":nombreArchivo,"filename":os.path.basename(filename)}))
+                                            headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":nombreArchivo,"filename":os.path.basename(filename), "idglance":idImagen}))
                 if(response.status_code==200 and response.json()['result']=="Correcto"):
                     print(Fore.GREEN+"Imagen agregada exitosamente")
                 else:
