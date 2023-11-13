@@ -3,10 +3,12 @@ from fastapi import FastAPI, Request
 from typing import Optional
 from pydantic import BaseModel
 from fastapi.responses import HTMLResponse
-import random, platform, json, os
+import random, platform, json, os, uvicorn
 from resourceManager import validarRecursosDisponibles
 from vmPlacement import crearSlice
 from vmPlacement import modificarSlice
+
+app = FastAPI()
 
 sistema = platform.system()
 if(sistema =="Linux"):
@@ -233,5 +235,4 @@ async def guardarPlataforma(plataforma: str):
     return {"result":"Guardado exitoso"}
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("servidorPy:app", host="0.0.0.0", port=8000, reload=True)
