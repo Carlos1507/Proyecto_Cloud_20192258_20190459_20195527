@@ -3,6 +3,7 @@ from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
 from Recursos.funcionEnviarMail import send_email
+from servidor import resourceManager
 
 console = Console()
 
@@ -71,6 +72,7 @@ def crearUsuario(usuario, endpointBase):
                                data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"flagAZ":True,"Roles_idRoles":2}))
     if(respoCrear.status_code == 200):
         print(Fore.GREEN+"Usuario creado exitosamente")
+        crearUsuarioEnOpenStack(username, passwd)
         send_email("[OLIMPUS] Credenciales de acceso - PUCP", email, username, passwd)
         print(Fore.GREEN+"Correo enviado con credenciales")
         gestionarUsuarios(usuario, endpointBase)
@@ -125,3 +127,8 @@ def listarAllUsers(usuario, endpointBase):
     else:
         print(Fore.RED + "Error en el servidor")
         gestionarUsuarios(usuario, endpointBase)
+
+
+def crearUsuarioEnOpenStack(username, passwd):
+    comando = f"openstack user create --domain default --password {passwd} {username}"
+    resourceManager.execRemoto(comando,"10.20.10.221")
