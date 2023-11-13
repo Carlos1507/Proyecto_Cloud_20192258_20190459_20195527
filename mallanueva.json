@@ -1,1 +1,0 @@
-{"vms": [{"nombre": "vm1", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"}, {"nombre": "vm2", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"}, {"nombre": "vm3", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"}], "enlaces": [["vm1", "vm2"], ["vm1", "vm3"], ["vm2", "vm3"]], "nombre": "aaa", "fecha": "07/11/2023"}

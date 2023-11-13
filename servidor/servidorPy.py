@@ -3,15 +3,18 @@ from fastapi import FastAPI, Request
 from typing import Optional
 from pydantic import BaseModel
 from fastapi.responses import HTMLResponse
-import random, platform, json, os
+import random, platform, json, os, uvicorn
 from resourceManager import validarRecursosDisponibles
 from vmPlacement import crearSlice
+from vmPlacement import modificarSlice
+
+app = FastAPI()
 
 sistema = platform.system()
 if(sistema =="Linux"):
-    from Recursos.funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
+    from funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
 else:
-    from Recursos.funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
+    from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
 
 class Usuario(BaseModel):
     idUsuario: Optional[int] = None
@@ -36,6 +39,7 @@ class UserValidation(BaseModel):
 class Imagen(BaseModel):
     nombre: str
     filename: Optional[str] = None
+    idglance: Optional[str] = None
     VMs_idRecursos: Optional[int] = None
 
 class AZsConf(BaseModel):
@@ -100,8 +104,7 @@ async def validacionRecursosDisponibles(idUser: int, request: Request):
                     recursos para generar este slice"}
     else:
         return {"result":"El servidor está atentiendo a otro usuario, espere su turno"}
-
-@app.get("/allUsers/remoto")
+    
 async def allUsersRemoto():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, flagAZ, Roles_idRoles FROM usuario", ())
     listaUsuarios = [list(tupla) for tupla in result]
@@ -123,6 +126,7 @@ async def saveFlavor(flavor: Flavor):
     try:
         result = ejecutarConsultaSQL("INSERT INTO flavors (ram_mb, disk_gb, cpus, nombre, idflavorglance) VALUES (%s, %s, %s, %s, %s)",
                             (flavor.ram_mb, flavor.disk_gb, flavor.cpus, flavor.nombre, flavor.idflavorglance))
+        
         return {"result":"Correcto"}
     except Exception as e:
         print("Error: ", e)
@@ -169,10 +173,17 @@ async def eliminarSlice(idUser: str, request: Request):
             sliceEliminar = slice
     listaSlicesUsuariosModif.remove(sliceEliminar)
     slicesUsuarios = listaSlicesUsuariosModif
-   # listaSlicesUsuariosModif.remove(data)
-   # slicesUsuarios = listaSlicesUsuariosModif
     return {"result":"Eliminado con éxito"}
 
+@app.post("/changeSlice/{idUser}")
+async def validacionRecursosDisponibles(idUser: int, request: Request):
+    data = await request.json()
+    if(validarRecursosDisponibles(data) == True): ## Resource Manager
+        modificarSlice(data)   ## VM Placement
+        return {"result": "Slice creado exitosamente"}
+    else:
+        return {"result": "En este momentoNo se cuentan con los suficientes "+ \
+                 "recursos para generar este slice"}
 
 @app.post("/crearUsuario")
 async def crearUsuario(user: Usuario):
@@ -203,7 +214,7 @@ async def eliminarImagen(idImagen: str):
 async def agregarImagen(imagen: Imagen):
     print(imagen)
     try:
-        ejecutarConsultaSQL("INSERT INTO imagenes (nombre, filename) VALUES (%s, %s)", (imagen.nombre,imagen.filename))
+        ejecutarConsultaSQL("INSERT INTO imagenes (nombre, filename, idglance) VALUES (%s, %s, %s)", (imagen.nombre,imagen.filename, imagen.idglance))  
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
@@ -224,5 +235,4 @@ async def guardarPlataforma(plataforma: str):
     return {"result":"Guardado exitoso"}
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("servidorPy:app", host="0.0.0.0", port=8000, reload=True)
