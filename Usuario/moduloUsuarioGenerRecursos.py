@@ -1,7 +1,9 @@
 import questionary, requests
 from colorama import Fore
 import copy
-
+from rich.console import Console
+from rich.table import Table
+console = Console()
 class VM:
     def __init__(self, nombre, ram, cpu, disk, imagen):
         self.nombre = nombre
@@ -20,19 +22,42 @@ class VM:
 
 def agregarVM(endpointBase):
     print(Fore.CYAN+"Creación de su máquina virtual:")
-    nombreVM = questionary.text("Ingrese el nombre de la VM:").ask()
-    ramVM = questionary.text("Ingrese el tamaño de la ram en MB:").ask()
-    diskVM = questionary.text("Ingrese el tamaño del disco en GB:").ask()
-    cpuVM = questionary.text("Ingrese el número de cores para la VM (CPUs)").ask()
+    nombreVM = ""
+    while(True):
+        nombreVM = questionary.text("Ingrese el nombre de la VM:").ask()
+        if nombreVM.strip() != "": break
+        else:
+            print(Fore.RED+"El nombre no debe estar vacío")
+            continue
     response = requests.get(url = endpointBase+"/allImagenes", 
-                                headers = {"Content-Type": "application/json"})
-    if(response.status_code == 200):
-        imagenes = response.json()['result']
-        imagenesNombres = [imagen[1] for imagen in imagenes]
-        imagenNombre = questionary.select("Seleccione una de las imágenes disponibles:", choices = imagenesNombres).ask()
-        return VM(nombreVM, ramVM, cpuVM, diskVM, imagenNombre).to_dict()   
-    else:
-        print(Fore.RED + "Error en el servidor, en este momento no se puede acceder a las imágenes")
+                                        headers = {"Content-Type": "application/json"})
+    imagenes = response.json()['result']
+    imagenesOpciones = [imagen[1] for imagen in imagenes]
+    imagen = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
+
+    response = requests.get(url = endpointBase+"/allFlavors", 
+                                    headers = {"Content-Type": "application/json"})
+    flavors = response.json()['result']
+        
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("N°",justify="center")
+    table.add_column("Nombre", justify="center")
+    table.add_column("RAM (MB)",justify="center")
+    table.add_column("Disco (GB)", justify="left")
+    table.add_column("N° Cores", justify="lef")
+    index = 1
+    for flavor in flavors:
+        nombre = flavor['nombre']
+        ram = flavor['ram']
+        disk = flavor['disk']
+        cpus = flavor['cpu']
+        table.add_row(str(index), nombre, str(ram), str(disk), str(cpus))
+        index+=1
+    console.print(table)
+    flavorName = [flavor['nombre'] for flavor in flavors]
+    flavorChoosedName = questionary.select("Seleccione un flavor: ", choices=flavorName).ask()
+    flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorChoosedName][0]
+    return VM(nombreVM, flavor_seleccionado['ram'], flavor_seleccionado['cpu'], flavor_seleccionado['disk'] , imagen).to_dict()   
 
 def generarEnlace(listaVMs, listaEnlaces):
     listaNombresVMs = [vm['nombre'] for vm in listaVMs]

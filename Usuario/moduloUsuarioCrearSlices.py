@@ -71,14 +71,15 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
 
         if confirmation:
             graficarTopologia(titulo, listaNodos, listaEnlaces)
+        response = requests.get(url = endpointBase+"/allImagenes", 
+                                        headers = {"Content-Type": "application/json"})
+        imagenes = response.json()['result']
+        imagenesOpciones = [imagen[1] for imagen in imagenes]
+        imagen = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
-        comandoListarImages = "openstack image list --long -c Name | awk 'NR>2 {print $2}'"
-        listaImagenes = ejecutarComando.execRemoto(comandoListarImages, "10.20.10.221").split("\n")
-        imagen = questionary.select("Seleccione una imagen: ", choices=listaImagenes).ask()
-
-        comandoListarFlavors = "openstack flavor list --long -c Name -c RAM -c Disk -c VCPUs --format json"
-        listaFlavors = ejecutarComando.execRemoto(comandoListarFlavors, "10.20.10.221")
-        flavors = json.loads(listaFlavors)
+        response = requests.get(url = endpointBase+"/allFlavors", 
+                                        headers = {"Content-Type": "application/json"})
+        flavors = response.json()['result']
         
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("N°",justify="center")
@@ -88,20 +89,20 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         table.add_column("N° Cores", justify="lef")
         index = 1
         for flavor in flavors:
-            nombre = flavor['Name']
-            ram = flavor['RAM']
-            disk = flavor['Disk']
-            cpus = flavor['VCPUs']
+            nombre = flavor['nombre']
+            ram = flavor['ram']
+            disk = flavor['disk']
+            cpus = flavor['cpu']
             table.add_row(str(index), nombre, str(ram), str(disk), str(cpus))
             index+=1
         console.print(table)
-        flavorName = [flavor['Name'] for flavor in flavors]
+        flavorName = [flavor['nombre'] for flavor in flavors]
         flavorChoosedName = questionary.select("Seleccione un flavor: ", choices=flavorName).ask()
-        flavor_seleccionado = [flavor for flavor in flavors if flavor["Name"] == flavorChoosedName][0]
+        flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorChoosedName][0]
         print(flavor_seleccionado)
         VMsDetalladas = []
         for vm_name in listaNodos:
-            VMsDetalladas.append(recurso.VM(vm_name, flavor_seleccionado['RAM'], flavor_seleccionado['VCPUs'], flavor_seleccionado['Disk'] , imagen).to_dict())
+            VMsDetalladas.append(recurso.VM(vm_name, flavor_seleccionado['ram'], flavor_seleccionado['cpu'], flavor_seleccionado['disk'] , imagen).to_dict())
         fecha_actual = datetime.datetime.now()
         nombre = questionary.text("Ingrese un nombre para su slice").ask()
         slice = {"vms": VMsDetalladas, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  

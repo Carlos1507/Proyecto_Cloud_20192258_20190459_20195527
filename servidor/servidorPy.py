@@ -32,6 +32,24 @@ class Flavor(BaseModel):
     nombre: str
     idflavorglance: Optional[str] = None
 
+class FlavorBD:
+    def __init__(self, idflavors, ram_mb, disk_gb, cpus, nombre, idflavorglance):
+        self.nombre = nombre
+        self.ram = ram_mb
+        self.cpu = cpus
+        self.disk = disk_gb
+        self.idflavors = idflavors
+        self.idflavorglance = idflavorglance
+    def to_dict(self):
+        return {
+            'idflavors': self.idflavors,
+            'ram_mb': self.ram,
+            'disk_gb': self.disk, 
+            'cpus': self.cpu,
+            'nombre': self.nombre,
+            'idflavorglace': self.idflavorglance
+        }
+
 class UserValidation(BaseModel):
     username: str
     password: str
@@ -201,6 +219,23 @@ async def listarImagenes():
     result = ejecutarConsultaSQL("SELECT idImagenes, nombre FROM imagenes", ())
     listaImagenes = [list(tupla) for tupla in result]
     return {"result": listaImagenes}
+
+@app.get("/allFlavors")
+async def listarFlavors():
+    result = ejecutarConsultaSQL("SELECT * FROM flavors", ())
+    listaFlavors = []
+    for elem in result:
+        print(elem)
+        listaFlavors.append(FlavorBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5]))
+    return {"result": listaFlavors}
+
+@app.get("/eliminarFlavor/{idFlavor}")
+async def eliminarFlavor(idFlavor: int):
+    try:
+        ejecutarConsultaSQL("DELETE FROM flavors WHERE idflavors = %s", (idFlavor,))
+        return {"result":"Correcto"}
+    except:
+        return {"result":"Error"}
 
 @app.get("/eliminarImagen/{idImagen}")
 async def eliminarImagen(idImagen: str):
