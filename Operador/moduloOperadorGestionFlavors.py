@@ -1,6 +1,10 @@
 import requests, questionary
 from colorama import Fore
 import json
+from rich.console import Console
+from Recursos.funcionEjecutarComandoRemoto import execRemoto
+from rich.table import Table
+console = Console()
 import Recursos.funcionEjecutarComandoRemoto as ejecutarComando
 def gestorImagenesGlance(endpointBase, nombre, filename):
     comando = f"glance image-create --name {nombre} --file /home/ubuntu/imagenes/{filename} "+ \
@@ -15,7 +19,7 @@ def gestorImagenesGlance(endpointBase, nombre, filename):
 def gestorFlavors(endpointBase):
     print(Fore.CYAN+"Gestionando flavors del sistema...")
     print(Fore.CYAN+"Estas serán las opciones que tendrán disponibles los usuarios al deplegar VMs")
-    opcionesSubMenuFlavors = ["1. Definir nuevo flavor", "2. Listar flavors"]
+    opcionesSubMenuFlavors = ["1. Definir nuevo flavor", "2. Listar flavors", "3. Eliminar flavor","4. Regresar"]
     opcion = questionary.select("Elija una opción: ", choices=opcionesSubMenuFlavors).ask()
     if(opcion =="4. Regresar"):
         return
@@ -24,6 +28,8 @@ def gestorFlavors(endpointBase):
             crearFlavor(endpointBase)
         elif(opcion == "2. Listar flavors"):
             listarFlavors(endpointBase)
+        elif(opcion == "3. Eliminar flavor"):
+            eliminarFlavor(endpointBase)
 def crearFlavor(endpointBase):
     ram_size = questionary.text("Indique el tamaño de la RAM en MB: ").ask()
     disk_size = questionary.text("Indique el tamaño del disco en GB: ").ask()
@@ -40,5 +46,41 @@ def crearFlavor(endpointBase):
         print(Fore.RED+"Error en el servidor")
 
 def listarFlavors(endpointBase):
-    comandoListFlavors =f"openstack flavor list"
-    ejecutarComando.execRemoto(comandoListFlavors, "10.20.10.221")
+    response = requests.get(url = endpointBase+"/allFlavors", 
+                                    headers = {"Content-Type": "application/json"})
+    flavors = response.json()['result']
+        
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("N°",justify="center")
+    table.add_column("Nombre", justify="center")
+    table.add_column("RAM (MB)",justify="center")
+    table.add_column("Disco (GB)", justify="left")
+    table.add_column("N° Cores", justify="lef")
+    index = 1
+    for flavor in flavors:
+        nombre = flavor['nombre']
+        ram = flavor['ram']
+        disk = flavor['disk']
+        cpus = flavor['cpu']
+        table.add_row(str(index), nombre, str(ram), str(disk), str(cpus))
+        index+=1
+    console.print(table)
+
+def eliminarFlavor(endpointBase):
+    response = requests.get(url = endpointBase+"/allFlavors", 
+                                headers = {"Content-Type": "application/json"})
+    if(response.status_code == 200):
+        flavors = response.json()['result']
+        flavorOpciones = [flavor['nombre'] for flavor in flavors]
+        flavorNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=flavorOpciones).ask()
+        flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorNombre][0]
+        resultadoEliminar = requests.get(url = endpointBase+"/eliminarFlavor/"+str(flavor_seleccionado['idflavors']), 
+                                         headers = {"Content-Type": "application/json"})
+        execRemoto("openstack flavor delete "+ flavor_seleccionado['idflavorglance'], "10.20.10.221")
+        if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
+            print(Fore.GREEN+"Flavor Eliminado Correctamente")
+        else:
+            print(Fore.RED+"Hubo un problema al eliminar, intente nuevamente")
+    else:
+        print(Fore.RED + "Error en el servidor")
+    gestorFlavors(endpointBase)
