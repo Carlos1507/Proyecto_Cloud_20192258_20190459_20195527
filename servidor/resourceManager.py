@@ -44,11 +44,10 @@ def execRemoto(command, host):
         _stdin, _stdout, _stderr = client.exec_command(comandos[0]+ " ; "+comandos[1])
         output = _stdout.read().decode().strip()
         error = _stderr.read().decode().strip()
-        print(f"Comando ejecutado: {command}")
-        print(f"Resultado: {output}")
-        print(f"Error: {error}")
-        if("openstack" in comandos[1]):
-            return output
+        #print(f"Comando ejecutado: {command}")
+        #print(f"Resultado: {output}")
+        #print(f"Error: {error}")
+        return output
     except Exception as e:
         print(f"Error {str(e)}")
     finally:
