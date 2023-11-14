@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.table import Table
 from colorama import Fore, Style, init
 from Recursos.funcionEnviarMail import send_email
-from servidor import resourceManager
+from Recursos import funcionEjecutarComandoRemoto
 
 console = Console()
 
@@ -131,4 +131,4 @@ def listarAllUsers(usuario, endpointBase):
 
 def crearUsuarioEnOpenStack(username, passwd):
     comando = f"openstack user create --domain default --password {passwd} {username}"
-    resourceManager.execRemoto(comando,"10.20.10.221")
+    funcionEjecutarComandoRemoto.execRemoto(comando,"10.20.10.221")
