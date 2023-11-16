@@ -24,7 +24,7 @@ def crearUsuario(usuario, endpointBase):
     print("Ingrese los siguiente datos: ")
     username = questionary.text("Username:").ask().strip()
     print("Verificando username disponible ...")
-    response = requests.get(url = endpointBase+ "/allUsers", headers = {"Content-Type": "application/json"})
+    response = requests.get(url = endpointBase+ "/usuario/listar", headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         # Validando username no repetido y diferente de vacio
         listUsernames = [elemento[1] for elemento in response.json()['result']]
@@ -68,7 +68,7 @@ def crearUsuario(usuario, endpointBase):
     hash_sha512 = hashlib.sha512()
     hash_sha512.update(passwd.encode("utf-8"))
     # Creando usuario
-    respoCrear = requests.post(url = endpointBase+ "/crearUsuario", headers = {"Content-Type": "application/json"}, 
+    respoCrear = requests.post(url = endpointBase+ "/usuario/crear", headers = {"Content-Type": "application/json"}, 
                                data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"flagAZ":True,"Roles_idRoles":2}))
     if(respoCrear.status_code == 200):
         print(Fore.GREEN+"Usuario creado exitosamente")
@@ -82,7 +82,7 @@ def crearUsuario(usuario, endpointBase):
 
 
 def eliminarUsuario(usuario, endpointBase):
-    response = requests.get(url = endpointBase+"/allUsers", 
+    response = requests.get(url = endpointBase+"/usuario/listar", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         usuarios = response.json()['result']
@@ -97,20 +97,21 @@ def eliminarUsuario(usuario, endpointBase):
         usuarioEliminar = questionary.rawselect("Elija un usuario a eliminar: (O seleccione la última opción para volver)", choices=listaUsuarios).ask()
         if(usuarioEliminar=="* Regresar"):
             gestionarUsuarios(usuario, endpointBase)
-        idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
-        resultadoEliminar = requests.get(url = endpointBase+"/eliminarUsuario/"+str(idEliminar), 
-                                         headers = {"Content-Type": "application/json"})
-        if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
-            print(Fore.GREEN+"Usuario Eliminado Correctamente")
         else:
-            print(Fore.RED+"Hubo un problema al eliminar, intente nuevamente")
+            idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
+            resultadoEliminar = requests.get(url = endpointBase+"/usuario/eliminar/"+str(idEliminar), 
+                                            headers = {"Content-Type": "application/json"})
+            if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
+                print(Fore.GREEN+"Usuario Eliminado Correctamente")
+            else:
+                print(Fore.RED+"Hubo un problema al eliminar, intente nuevamente")
     else:
         print(Fore.RED+"Error en el servidor")
         gestionarUsuarios(usuario, endpointBase)
 
 
 def listarAllUsers(usuario, endpointBase):
-    response = requests.get(url = endpointBase+ "/allUsers", 
+    response = requests.get(url = endpointBase+ "/usuario/listar", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         usuarios = response.json()['result']
@@ -118,10 +119,9 @@ def listarAllUsers(usuario, endpointBase):
         table.add_column("idUser", justify="right")
         table.add_column("Username",justify="center")
         table.add_column("Correo", justify="left")
-        table.add_column("¿Eligió AZs?", justify="lef")
         table.add_column("Rol", justify="left")
         for user in usuarios:
-            table.add_row(str(user[0]), user[1], user[2], "Si" if user[3]==1 else "No", "Usuario" if user[4]==2 else "Operador")
+            table.add_row(str(user[0]), user[1], user[2], "Usuario" if user[3]==2 else "Operador")
         console.print(table)
         gestionarUsuarios(usuario, endpointBase)
     else:

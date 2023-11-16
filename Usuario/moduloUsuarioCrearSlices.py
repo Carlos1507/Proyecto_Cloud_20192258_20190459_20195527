@@ -51,33 +51,38 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
     else: 
         listaEnlaces, listaNodos = [], []
         if(opcion=="1. Malla"):
-            numNodos = questionary.text("Ingrese el número de nodos").ask()
+            while not (numNodos := questionary.text("Ingrese el número de nodos").ask().strip()):
+                print(Fore.YELLOW + "Debe definir un número de nodos")
             titulo = "Malla con "+numNodos
             listaEnlaces, listaNodos = generarMalla(int(numNodos))
         elif(opcion=="2. Árbol"):
-            niveles = questionary.text("Ingrese el número de niveles del árbol").ask()
-            hijos = questionary.text("Ingrese el número de hijos por nodo").ask()
+            while not (niveles := questionary.text("Ingrese el número de niveles del árbol").ask().strip()):
+                print(Fore.YELLOW + "Debe definir un número de niveles")
+            while not (hijos := questionary.text("Ingrese el número de hijos por nodo").ask().strip()):
+                print(Fore.YELLOW + "Debe definir un número de hijos por nodo")
             titulo = "Arbol nivel "+niveles+" con "+hijos+" hijos por nodo"
             listaEnlaces, listaNodos = generarArbol(int(hijos), int(niveles))
         elif(opcion=="3. Anillo"):
-            numNodos = questionary.text("Ingrese el número de nodos").ask()
+            while not (numNodos := questionary.text("Ingrese el número de nodos").ask().strip()):
+                print(Fore.YELLOW + "Debe definir un número de nodos")
             titulo = "Anillo con "+numNodos
             listaEnlaces, listaNodos = generarAnillo(int(numNodos))
         elif(opcion=="4. Lineal"):
-            numNodos = questionary.text("Ingrese el número de nodos").ask()
+            while not (numNodos := questionary.text("Ingrese el número de nodos").ask().strip()):
+                print(Fore.YELLOW + "Debe definir un número de nodos")
             titulo = "Lineal con "+numNodos
             listaEnlaces, listaNodos = generarLineal(int(numNodos))
         confirmation = questionary.confirm("¿Desea tener una vista previa?").ask()
 
         if confirmation:
             graficarTopologia(titulo, listaNodos, listaEnlaces)
-        response = requests.get(url = endpointBase+"/allImagenes", 
+        response = requests.get(url = endpointBase+"/imagenes/listar", 
                                         headers = {"Content-Type": "application/json"})
         imagenes = response.json()['result']
         imagenesOpciones = [imagen[1] for imagen in imagenes]
         imagen = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
-        response = requests.get(url = endpointBase+"/allFlavors", 
+        response = requests.get(url = endpointBase+"/flavors/listar", 
                                         headers = {"Content-Type": "application/json"})
         flavors = response.json()['result']
         
@@ -104,7 +109,8 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         for vm_name in listaNodos:
             VMsDetalladas.append(recurso.VM(vm_name, flavor_seleccionado['ram'], flavor_seleccionado['cpu'], flavor_seleccionado['disk'] , imagen).to_dict())
         fecha_actual = datetime.datetime.now()
-        nombre = questionary.text("Ingrese un nombre para su slice").ask()
+        while not (nombre := questionary.text("Ingrese un nombre para su slice").ask().strip()):
+            print(Fore.YELLOW + "Su slice debe tener un nombre")
         slice = {"vms": VMsDetalladas, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
         confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
         if(confirmationCrear):
@@ -191,7 +197,8 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
     if confirmation:
         graficarTopologia("Diagrama Topología", listaVMsNombres,listaEnlaces)
     fecha_actual = datetime.datetime.now()
-    nombre = questionary.text("Ingrese un nombre para su slice").ask()
+    while not (nombre := questionary.text("Ingrese un nombre para su slice").ask().strip()):
+        print(Fore.YELLOW + "Su slice debe tener un nombre")
     slice = {"vms": listaVMs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
     confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
     if(confirmationCrear):

@@ -3,22 +3,24 @@ from colorama import Fore
 global usuarioBD
 global usuarioLog
 class User:
-    def __init__(self, idUser, username, correo, rol, eligioAZs):
+    def __init__(self, idUser, username, correo, rol):
         self.idUser = idUser
         self.username = username
         self.correo = correo
         self.rol = rol
-        self.eligioAZs = eligioAZs
 
 def autorizacion(endpointBase):
-    username = questionary.text("Usuario: [digite 0 aquí para salir]").ask()
+    while not (username := questionary.text("Usuario: [digite 0 aquí para salir]").ask().strip()):
+        print(Fore.YELLOW + "El nombre de usuario no debe estar vacío")
+    
     username = username.strip()
     if(username !="0"):
         hash_sha512 = hashlib.sha512()
-        passw = questionary.password("Contraseña: ").ask()
+        while not (passw := questionary.password("Contraseña: ").ask().strip()):
+            print(Fore.YELLOW + "Debe ingresar una contraseña")
         hash_sha512.update(passw.encode("utf-8"))
         print("Validando...")
-        response = requests.post(url = endpointBase+"/validarPOST", 
+        response = requests.post(url = endpointBase+"/usuario/validar", 
                                 headers = {"Content-Type": "application/json"}, 
                                 data= json.dumps({"username": username, "password": hash_sha512.hexdigest()}))
         if(response.status_code == 200):
@@ -31,7 +33,7 @@ def autorizacion(endpointBase):
             else:    
                 print(Fore.GREEN + "Logueo exitoso")   
                 usuarioLog = User(usuarioBD['result'][0], usuarioBD['result'][1], usuarioBD['result'][3], 
-                                  usuarioBD['result'][5], usuarioBD['result'][4])
+                                  usuarioBD['result'][4])
                 
                 return usuarioLog
         else:

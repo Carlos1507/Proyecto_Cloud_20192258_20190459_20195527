@@ -38,7 +38,7 @@ def crearFlavor(endpointBase):
     comandoNewFlavor =f"openstack flavor create --ram {ram_size} --disk {disk_size} --vcpus {num_cpus} {nombreFlavor} --format json"
     outputjson = ejecutarComando.execRemoto(comandoNewFlavor, "10.20.10.221")
     jsonresponse = json.loads(outputjson)
-    response = requests.post(url = endpointBase+ "/saveFlavor", 
+    response = requests.post(url = endpointBase+ "/flavors/crear", 
                                 headers = {"Content-Type": "application/json"}, data=json.dumps({"ram_mb":ram_size, "disk_gb":disk_size, "cpus":num_cpus, "nombre":nombreFlavor, "idflavorglance": jsonresponse['id']}))
     if(response.status_code==200 and response.json()['result']=="Correcto"):
         print(Fore.GREEN+"Imagen agregada exitosamente")
@@ -46,7 +46,7 @@ def crearFlavor(endpointBase):
         print(Fore.RED+"Error en el servidor")
 
 def listarFlavors(endpointBase):
-    response = requests.get(url = endpointBase+"/allFlavors", 
+    response = requests.get(url = endpointBase+"/flavors/listar", 
                                     headers = {"Content-Type": "application/json"})
     flavors = response.json()['result']
         
@@ -67,14 +67,14 @@ def listarFlavors(endpointBase):
     console.print(table)
 
 def eliminarFlavor(endpointBase):
-    response = requests.get(url = endpointBase+"/allFlavors", 
+    response = requests.get(url = endpointBase+"/flavors/listar", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         flavors = response.json()['result']
         flavorOpciones = [flavor['nombre'] for flavor in flavors]
         flavorNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=flavorOpciones).ask()
         flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorNombre][0]
-        resultadoEliminar = requests.get(url = endpointBase+"/eliminarFlavor/"+str(flavor_seleccionado['idflavors']), 
+        resultadoEliminar = requests.get(url = endpointBase+"/flavors/eliminar/"+str(flavor_seleccionado['idflavors']), 
                                          headers = {"Content-Type": "application/json"})
         execRemoto("openstack flavor delete "+ flavor_seleccionado['idflavorglance'], "10.20.10.221")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):

@@ -29,11 +29,14 @@ def agregarImagen(endpointBase):
     try:
         with open(filename, "r") as archivo:
             enviarSCP(filename, 'ubuntu', "10.20.10.221", '/home/ubuntu/imagenes', 5800, "venv/headkey")
-            nombreArchivo = questionary.text("Ingrese nombre para su imagen").ask()
+          
+            while not (nombreArchivo := questionary.text("Ingrese nombre para su imagen").ask().strip()):
+                print(Fore.YELLOW + "El nombre no debe estar vacío")
+            
             if(gestionFlavors.gestorImagenesGlance(endpointBase, nombreArchivo, os.path.basename(filename)) == True):
                 IDImagencomando = f"openstack image list --name {nombreArchivo} -c ID -f value"
                 idImagen = ejecutarComando.execRemoto(IDImagencomando, "10.20.10.221")
-                response = requests.post(url = endpointBase+ "/agregarImagen", 
+                response = requests.post(url = endpointBase+ "/imagen/crear", 
                                             headers = {"Content-Type": "application/json"}, data=json.dumps({"nombre":nombreArchivo,"filename":os.path.basename(filename), "idglance":idImagen}))
                 if(response.status_code==200 and response.json()['result']=="Correcto"):
                     print(Fore.GREEN+"Imagen agregada exitosamente")
@@ -48,14 +51,14 @@ def agregarImagen(endpointBase):
     gestorImagenes(endpointBase)
 
 def eliminarImagen(endpointBase):
-    response = requests.get(url = endpointBase+"/allImagenes", 
+    response = requests.get(url = endpointBase+"/imagenes/listar", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         imagenes = response.json()['result']
         imagenesOpciones = [imagen[1] for imagen in imagenes]
         imagenNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=imagenesOpciones).ask()
         idEliminar = [imagen[0] for imagen in imagenes if imagen[1] == imagenNombre] [0]
-        resultadoEliminar = requests.get(url = endpointBase+"/eliminarImagen/"+str(idEliminar), 
+        resultadoEliminar = requests.get(url = endpointBase+"/imagen/eliminar/"+str(idEliminar), 
                                          headers = {"Content-Type": "application/json"})
         execRemoto("rm imagenes/"+imagenNombre, "10.20.10.221")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
@@ -67,7 +70,7 @@ def eliminarImagen(endpointBase):
     gestorImagenes(endpointBase)
 
 def listarImagenes(endpointBase):
-    response = requests.get(url = endpointBase+"/allImagenes", 
+    response = requests.get(url = endpointBase+"/imagenes/listar", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         imagenes = response.json()['result']

@@ -22,20 +22,16 @@ class VM:
 
 def agregarVM(endpointBase):
     print(Fore.CYAN+"Creación de su máquina virtual:")
-    nombreVM = ""
-    while(True):
-        nombreVM = questionary.text("Ingrese el nombre de la VM:").ask()
-        if nombreVM.strip() != "": break
-        else:
-            print(Fore.RED+"El nombre no debe estar vacío")
-            continue
-    response = requests.get(url = endpointBase+"/allImagenes", 
+
+    while not (nombreVM := questionary.text("Ingrese el nombre de la VM:").ask().strip()):
+                print(Fore.YELLOW + "El nombre no debe estar vacío")
+    response = requests.get(url = endpointBase+"/imagenes/listar", 
                                         headers = {"Content-Type": "application/json"})
     imagenes = response.json()['result']
     imagenesOpciones = [imagen[1] for imagen in imagenes]
     imagen = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
-    response = requests.get(url = endpointBase+"/allFlavors", 
+    response = requests.get(url = endpointBase+"/flavors/listar", 
                                     headers = {"Content-Type": "application/json"})
     flavors = response.json()['result']
         
