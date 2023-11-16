@@ -65,7 +65,6 @@ class AZsConf(BaseModel):
 
 app = FastAPI()
 
-plataformaEnUso = ""
 slicesUsuarios = [{3: {'vms': [{'nombre': 'vm1', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm2', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm3', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm4', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}], 'enlaces': [['vm4', 'vm1'], ['vm1', 'vm3'], ['vm2', 'vm1']], 'nombre': 'Prueba', 'fecha': '09/10/2023'}}]  
 disponible = True
 usuarioEnAtencion = 0
@@ -130,8 +129,6 @@ async def allUsersRemoto():
 
 @app.post("/validarPOST")
 async def validate_password(uservalid: UserValidation):
-    global plataformaEnUso
-    print("Plataforma "+plataformaEnUso)
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
     print(type(result), result)
     if (len(result)!=0):
@@ -261,13 +258,6 @@ async def guardarAZs(confAZ: AZsConf):
     ejecutarConsultaSQL("ALTER TABLE zonas AUTO_INCREMENT = 1",())
     for az in confAZ.azs:
         ejecutarConsultaSQL("INSERT INTO zonas (nombre) values (%s)", az)
-
-@app.get("/guardarPlataforma/{plataforma}")
-async def guardarPlataforma(plataforma: str):
-    print(plataforma)
-    global plataformaEnUso
-    plataformaEnUso = plataforma
-    return {"result":"Guardado exitoso"}
 
 if __name__ == "__main__":
     uvicorn.run("servidorPy:app", host="0.0.0.0", port=8000, reload=True)
