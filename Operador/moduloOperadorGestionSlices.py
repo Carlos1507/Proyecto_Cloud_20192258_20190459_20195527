@@ -6,25 +6,25 @@ console = Console()
 
 def gestionarSlices(usuario, endpointBase):
 
-    response = requests.get(url = endpointBase+"/allSlices", 
+    response = requests.get(url = endpointBase+"/slice/listar", 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         slices = response.json()['result']
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("N°", justify="center")
-        table.add_column("idUser", justify="right")
-        table.add_column("Nombre",justify="center")
-        table.add_column("Fecha", justify="left")
-        table.add_column("Número VMs", justify="left")
-        table.add_column("Número enlaces", justify="left")
+        table.add_column("Usuario", justify="center")
+        table.add_column("Nombre Slice",justify="center")
+        table.add_column("Fecha", justify="center")
+        table.add_column("Número VMs", justify="center")
+        table.add_column("Número enlaces", justify="center")
         n = 1
         for slice in slices:
-            idUser = next(iter(slice.keys()))
-            nombre = slice[idUser]['nombre']
-            fecha = slice[idUser]['fecha']
-            numVMs = str(len(slice[idUser]['vms']))
-            numLinks = str(len(slice[idUser]['enlaces']))
-            table.add_row(str(n),str(idUser), nombre, fecha, numVMs, numLinks)
+            username = slice['user']
+            nombreSlice = slice['slice']['nombre']
+            fecha = slice['slice']['fecha']
+            numVMs = str(len(slice['slice']['sliceJSON']['vms']))
+            numLinks = str(len(slice['slice']['sliceJSON']['enlaces']))
+            table.add_row(str(n),username, nombreSlice, fecha, numVMs, numLinks)
             n+=1
         console.print(table)
     else:

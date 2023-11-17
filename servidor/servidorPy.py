@@ -51,18 +51,6 @@ class Imagen(BaseModel):
     filename: Optional[str] = None
     idglance: Optional[str] = None
     VMs_idRecursos: Optional[int] = None
-
-class VM(BaseModel):
-    nombre: str
-    ram: int
-    cpu: int
-    disk: int
-    imagen: str
-class SliceJSON(BaseModel):
-    vms: List[VM]
-    enlaces: List[List[str]]
-    nombre: str
-    fecha: str
 class Slice(BaseModel):
     idSlice: Optional[int] = None
     nombre: Optional[str]
@@ -70,15 +58,7 @@ class Slice(BaseModel):
     idLinuxproject: Optional[str] = None
     usuario_idUsuario: Optional[int]
     fecha: Optional[str] =  None
-    sliceJSON: Union[str, SliceJSON]
-    @validator("sliceJSON", pre=True, always=True)
-    def parse_slice_json(cls, value):
-        if isinstance(value, str):
-            try:
-                return SliceJSON.parse_raw(value)
-            except ValidationError as e:
-                raise ValueError(f"Error al parsear sliceJSON: {e}")
-        return value
+    sliceJSON: str
 
 ########################### MODELOS BD ##############################
 class FlavorBD:
@@ -119,8 +99,39 @@ class RecursosBD:
             'cpusAsignado': self.cpusAsignado,
             'cpuTotal': self.cpuTotal
         }
+class SliceBD:
+    def __init__(self, idSlice, nombre, idOpenstackproject, idLinuxproject, usuario_idUsuario, fecha, sliceJSON):
+        self.idSlice = idSlice
+        self.nombre = nombre
+        self.idOpenstackproject = idOpenstackproject
+        self.idLinuxproject = idLinuxproject
+        self.usuario_idUsuario = usuario_idUsuario
+        self.fecha = fecha
+        self.sliceJSON = sliceJSON
+    def to_dict(self):
+        return {
+            'idSlice': self.idSlice,
+            'nombre': self.nombre,
+            'idOpenstackproject': self.idOpenstackproject, 
+            'idLinuxproject': self.idLinuxproject,
+            'usuario_idUsuario': self.usuario_idUsuario,
+            'fecha': self.fecha,
+            'sliceJSON': self.sliceJSON
+        }
+class ImagenBD:
+    def __init__(self, idImagenes, nombre, filename, idglance):
+        self.idImagenes = idImagenes
+        self.nombre = nombre
+        self.filename = filename
+        self.idglance = idglance
+    def to_dict(self):
+        return {
+            'idImagenes': self.idImagenes,
+            'nombre': self.nombre,
+            'filename': self.filename, 
+            'idglance': self.idglance
+        }
 
-slicesUsuarios = [{3: {'vms': [{'nombre': 'vm1', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm2', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm3', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}, {'nombre': 'vm4', 'capacidad': '1024', 'cpu': '2', 'imagen': 'cirros.img'}], 'enlaces': [['vm4', 'vm1'], ['vm1', 'vm3'], ['vm2', 'vm1']], 'nombre': 'Prueba', 'fecha': '09/10/2023'}}]  
 disponible = True
 usuarioEnAtencion = 0
 
@@ -185,8 +196,11 @@ async def usuarioEliminar(idUser: int):
 ########################## IMAGENES ##############################
 @app.get("/imagenes/listar")
 async def imagenesListar():
-    result = ejecutarConsultaSQL("SELECT idImagenes, nombre FROM imagenes", ())
-    listaImagenes = [list(tupla) for tupla in result]
+    result = ejecutarConsultaSQL("SELECT * FROM imagenes", ())
+    listaImagenes = []
+    for elem in result:
+        print(elem)
+        listaImagenes.append(ImagenBD(elem[0], elem[1], elem[2], elem[3]))
     return {"result": listaImagenes}
 @app.get("/imagen/eliminar/{idImagen}")
 async def imagenesEliminar(idImagen: str):
@@ -266,15 +280,17 @@ async def recursosEliminar(idRecursos: int):
         return {"result":"Error"}
 
 ########################### SLICES  ANTIGUO ###############################
-@app.get("/allSlices")
-async def allSlices():
-    global slicesUsuarios
-    return {"result": slicesUsuarios}
-@app.get("/slicesUser/{idUser}")
+@app.get("/slice/listarPorUsuario/{idUser}")
 async def allSlicesUser(idUser: int):
-    global slicesUsuarios
-    slicesUser = [diccionario for diccionario in slicesUsuarios if idUser in diccionario]
-    return {"result": slicesUser}
+    result = ejecutarConsultaSQL("SELECT * FROM slice where usuario_idUsuario = %s", (idUser,))
+    listaSlices = []
+    if(len(result)==0):
+        return {"result":[]}
+    else:
+        for elem in result:
+            listaSlices.append(SliceBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], json.loads(elem[6])).to_dict())
+        return {"result": listaSlices}
+
 @app.post("/eliminarSlice/{idUser}")
 async def eliminarSlice(idUser: str, request: Request):
     global slicesUsuarios
@@ -290,25 +306,16 @@ async def eliminarSlice(idUser: str, request: Request):
     return {"result":"Eliminado con éxito"}
 
 ########################### SLICES NUEVO ###############################
-@app.post("/slice/crear")
-async def sliceCrear(slice: Slice):
-    try:
-        result = ejecutarConsultaSQL("INSERT INTO slice (nombre, idOpenstackproject, idLinuxproject, usuario_idUsuario, fecha, sliceJSON) VALUES (%s, %s, %s, %s, %s, %s)",
-                            (slice.nombre, slice.idOpenstackproject, slice.idLinuxproject, slice.usuario_idUsuario, slice.fecha, slice.sliceJSON))
-        return {"result":result}
-    except Exception as e:
-        print("Error: ", e)
-        return {"result":"Error"}
 @app.get("/slice/listar")
 async def sliceListar():
-    result = ejecutarConsultaSQL("SELECT * FROM slice", ())
-    datosJSONCadena = result[0][6]
-  #  listaRecursos = []
-  #  for elem in result:
-  #      print(elem)
-  #      listaRecursos.append(Slice(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], elem[6]))
-  #  return {"result": listaRecursos}
-
+    result = ejecutarConsultaSQL("SELECT idSlice, nombre, idOpenstackproject, idLinuxProject, usuario_idUsuario, fecha, sliceJSON, username FROM slice INNER JOIN usuario ON slice.usuario_idUsuario = usuario.idUsuario", ())
+    listaSlices = []
+    if(len(result)==0):
+        return {"result":[]}
+    else:
+        for elem in result:
+            listaSlices.append({"user": elem[7] , "slice":SliceBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], json.loads(elem[6])).to_dict()})
+        return {"result": listaSlices}
 
 ########################### RESOURCE MANAGER & VM PLACEMENT ###############################
 @app.get("/disponible/{idUser}")
@@ -324,16 +331,12 @@ async def disponibleValidar(idUser: int):
         return {"result":"Ocupado"}
 @app.post("/validacionRecursos/{idUser}")
 async def validacionRecursosDisponibles(idUser: int, request: Request):
-    global usuarioEnAtencion, disponible, slicesUsuarios
+    global usuarioEnAtencion, disponible
     if(usuarioEnAtencion == idUser):
         data = await request.json()
         if(validarRecursosDisponibles(data) == True): ## Resource Manager
-            crearSlice(data)   ## VM Placement
-            listaSlices = slicesUsuarios
-            listaSlices.append({idUser: data})
-            slicesUsuarios = listaSlices
+            crearSlice(data, idUser)   ## VM Placement
             disponible = True
-            print(slicesUsuarios)
             return {"result": "Slice creado exitosamente"}
         else:
             return {"result": "En este momentoNo se cuentan con los suficientes \

@@ -79,8 +79,8 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         response = requests.get(url = endpointBase+"/imagenes/listar", 
                                         headers = {"Content-Type": "application/json"})
         imagenes = response.json()['result']
-        imagenesOpciones = [imagen[1] for imagen in imagenes]
-        imagen = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
+        imagenesOpciones = [imagen['nombre'] for imagen in imagenes]
+        imagenChoosedName = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
         response = requests.get(url = endpointBase+"/flavors/listar", 
                                         headers = {"Content-Type": "application/json"})
@@ -104,10 +104,10 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         flavorName = [flavor['nombre'] for flavor in flavors]
         flavorChoosedName = questionary.select("Seleccione un flavor: ", choices=flavorName).ask()
         flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorChoosedName][0]
-        print(flavor_seleccionado)
+        imagen_seleccionado = [imagen for imagen in imagenes if imagen["nombre"] == imagenChoosedName][0]
         VMsDetalladas = []
         for vm_name in listaNodos:
-            VMsDetalladas.append(recurso.VM(vm_name, flavor_seleccionado['ram'], flavor_seleccionado['cpu'], flavor_seleccionado['disk'] , imagen).to_dict())
+            VMsDetalladas.append(recurso.VM(vm_name, "", flavor_seleccionado['ram'], flavor_seleccionado['cpu'], flavor_seleccionado['disk'] , imagen_seleccionado['filename'] ,imagen_seleccionado['idglance'], flavor_seleccionado['idflavorglance']).to_dict())
         fecha_actual = datetime.datetime.now()
         while not (nombre := questionary.text("Ingrese un nombre para su slice").ask().strip()):
             print(Fore.YELLOW + "Su slice debe tener un nombre")
@@ -162,19 +162,19 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
     print(Fore.CYAN+"Agregue al menos 2 VM y 1 enlace")
     print(Fore.CYAN+"Añada sus Máquinas virtuales...")
     listaVMs = []
-    listaVMs.append(recurso.agregarVM(endpointBase))
-    listaVMs.append(recurso.agregarVM(endpointBase))
+    listaVMs.append(recurso.agregarVM(endpointBase, listaVMs))
+    listaVMs.append(recurso.agregarVM(endpointBase, listaVMs))
     while(True):
         confirmVM = questionary.confirm("¿Desea añadir otra VM?").ask()
-        if(confirmVM==True):
-            listaVMs.append(recurso.agregarVM(endpointBase))
+        if(confirmVM):
+            listaVMs.append(recurso.agregarVM(endpointBase, listaVMs))
         else:
             break
     listaEnlaces = []
     listaEnlaces.append(recurso.generarEnlace(listaVMs, listaEnlaces))
     while(True):
         confirmLink = questionary.confirm("¿Desea añadir otro enlace?").ask()
-        if(confirmLink==True):
+        if(confirmLink):
             vm1, vm2 = recurso.generarEnlace(listaVMs, listaEnlaces)
             if ((vm1 is not None) and (vm2 is not None)):
                 listaEnlaces.append((vm1, vm2))

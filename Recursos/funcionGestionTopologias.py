@@ -2,7 +2,7 @@ import networkx as nx
 import os
 import matplotlib.pyplot as plt
 
-def graficarTopologia(title, listaVMs, listaEnlaces):
+def graficarTopologia(title, listaVMs, listaEnlaces, flagGuardar):
     G = nx.Graph()
 
     G.add_nodes_from(listaVMs)
@@ -25,9 +25,10 @@ def graficarTopologia(title, listaVMs, listaEnlaces):
     nx.draw_networkx_labels(G, layout, labels=node_labels, ax=ax, font_size=10, verticalalignment='center', horizontalalignment='center')
 
     ax.set_title(title)
-    current_dir = os.getcwd()
-    output_path = os.path.join(current_dir,title,".png")
-    plt.savefig(output_path, format='png')
+    if flagGuardar:
+        current_dir = os.getcwd()
+        output_path = os.path.join(current_dir,title,".png")
+        plt.savefig(output_path, format='png')
     plt.show()
 
 def graficarTopologiaImportada(datos):
@@ -35,5 +36,5 @@ def graficarTopologiaImportada(datos):
     nombreSlice = datos['nombre']
     nombresVMs = [vm['nombre'] for vm in datos['vms']]
     links = datos['enlaces']
-    graficarTopologia("Topología importada: "+nombreSlice+" Creado: "+fechaCreacion, nombresVMs, links)
+    graficarTopologia("Topología importada: "+nombreSlice+" Creado: "+fechaCreacion, nombresVMs, links, False)
     return {'nombre':datos['nombre'], 'enlaces': datos['enlaces'], 'vms': datos['vms'], 'fecha': datos['fecha']} 

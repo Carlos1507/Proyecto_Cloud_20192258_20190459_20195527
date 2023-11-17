@@ -26,7 +26,7 @@ def validarRecursosDisponibles(data):
     print("En el Worker3 se tiene disponible:")
     print("RAM:", int(recursosW3['memory_mb'])-int(recursosW3['memory_mb_used']) , "CPUs:", int(recursosW3['vcpus'])-int(recursosW3['vcpus_used']), "Disk:",  int(recursosW3['local_gb'])-int(recursosW3['local_gb_used']))
 
-    choices = [True, True, True, True, True, False]
+    choices = [True, True, True, True, True, True]
     return random.choice(choices)
 
 

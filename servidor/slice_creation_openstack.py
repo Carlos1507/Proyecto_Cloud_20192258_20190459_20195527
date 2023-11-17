@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # Crear instancias
     instance_id_list = []
     instance_flavor_id = '766fa567-86c4-42b4-a3a1-f2316cdb0b7d' #200MBRAM_1VCPUs_1GBRoot
-    instance_image_id = '474e67b0-5022-43e7-9312-51085691a37e' #cirrus
+    instance_image_id = '474e67b0-5022-43e7-9312-51085691a37e' #cirros
     for instance_name in nombresVm:
         filtered_dict = {key: value for item in port_id_list for key, value in item.items() if instance_name in key}
         instance_networks = [{"port": value} for key, value in filtered_dict.items() if instance_name in key]

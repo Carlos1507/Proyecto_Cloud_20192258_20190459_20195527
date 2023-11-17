@@ -1,5 +1,6 @@
 import questionary, requests, time, json, datetime
 from rich.console import Console
+import copy
 from rich.table import Table
 import requests, questionary, json
 from colorama import Fore, Style, init
@@ -11,26 +12,25 @@ G = nx.Graph()
 console = Console()
 
 def gestionarSlicesUsuario(usuario, endpointBase):
-    response = requests.get(url = endpointBase+"/slicesUser/"+str(usuario.idUser), 
+    response = requests.get(url = endpointBase+"/slice/listarPorUsuario/"+str(usuario.idUser), 
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         slices = response.json()['result']
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("N°",justify="center")
-        table.add_column("Nombre",justify="center")
-        table.add_column("Fecha", justify="left")
-        table.add_column("Número Nodos", justify="lef")
-        table.add_column("Número enlaces", justify="left")
+        table.add_column("Nombre Slice",justify="center")
+        table.add_column("Fecha", justify="center")
+        table.add_column("Número Nodos", justify="center")
+        table.add_column("Número enlaces", justify="center")
         index = 1
         nombresSlices = []
         for slice in slices:
-            idUser = next(iter(slice.keys()))
-            nombre = slice[idUser]['nombre']
-            nombresSlices.append(nombre)
-            fecha = slice[idUser]['fecha']
-            numVMs = str(len(slice[idUser]['vms']))
-            numLinks = str(len(slice[idUser]['enlaces']))
-            table.add_row(str(index), nombre, fecha, numVMs,numLinks)
+            nombreSlice = slice['nombre']
+            nombresSlices.append(nombreSlice)
+            fecha = slice['fecha']
+            numVMs = str(len(slice['sliceJSON']['vms']))
+            numLinks = str(len(slice['sliceJSON']['enlaces']))
+            table.add_row(str(index), nombreSlice, fecha, numVMs,numLinks)
             index+=1
         console.print(table)
         opcionesGestion = ["a. Editar Slices","b. Eliminar Slices","Regresar"]
@@ -41,8 +41,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
             if(opcion=="b. Eliminar Slices"):
                 nombreSlice = questionary.select("¿Cuál desea eliminar?", choices=nombresSlices).ask()
                 for slice in slices:
-                    idUser = next(iter(slice.keys()))
-                    nombre = slice[idUser]['nombre']
+                    nombre = slice['nombre']
                     if nombre == nombreSlice:
                         data = slice
                         break
@@ -55,13 +54,12 @@ def gestionarSlicesUsuario(usuario, endpointBase):
             else:
                 nombreSlice = questionary.select("¿Cuál desea editar?", choices=nombresSlices).ask()
                 for slice in slices:
-                    idUser = next(iter(slice.keys()))
-                    nombre = slice[idUser]['nombre']
+                    nombre = slice['nombre']
                     if nombre == nombreSlice:
                         data = slice
                         break
-                slice_data = list(data.values())[0] #Es un diccionario
-                slice_data_copia = slice_data
+                slice_data = data['sliceJSON'] #Es un diccionario
+                slice_data_copia = copy.deepcopy(slice_data)
                 opcionesEditar = ["1. Eliminar VM","2. Eliminar Enlace","3. Agregar Enlace","4. Agregar VM","Regresar"]
                 opcion = questionary.select("¿Que acción realizará?", choices=opcionesEditar).ask()
                 if(opcion == "Regresar"):
@@ -83,7 +81,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                         graficarTopologiaImportada(slice_data)
                         agregarEnlace(slice_data_copia)
                     elif(opcion=="4. Agregar VM"):
-                        agregarVM(slice_data_copia)
+                        agregarVM(slice_data_copia, endpointBase)
                     else:
                         return
     else:
@@ -227,9 +225,14 @@ def agregarEnlace(datos):
             # Poner el web service
             print(Fore.GREEN+"Edición exitosa")
 
-def agregarVM(datos):
-    flavours = [{"nombre": "flav1", "capacidad": "1024", "cpu": "2"}, {"nombre": "flav2", "capacidad": "1024", "cpu": "4"}, {"nombre": "flav3", "capacidad": "516", "cpu": "1"}]
-    imagenes = ["cirros.img", "ubuntu22.img"]
+def agregarVM(datos, endpointBase):
+    responseFlavor = requests.get(url = endpointBase+"/flavors/listar", 
+                                headers = {"Content-Type": "application/json"})
+    flavours = responseFlavor.json()['result']
+    
+    responseImagenes = requests.get(url = endpointBase+"/imagenes/listar", 
+                                headers = {"Content-Type": "application/json"})
+    imagenes = responseImagenes.json()['result']
     alMenosUnaVez = 0
 
     while True:
@@ -241,9 +244,9 @@ def agregarVM(datos):
         nombre_nueva_vm = f"vm{numero_nueva_vm}"
 
         # Mostrar opciones de flavours
-        print(Fore.CYAN+"Opciones de Flavours:")
+        print(Fore.CYAN+"Opciones de Flavors:")
         for i, flavour in enumerate(flavours, start=1):
-            print(f"{i}. {flavour['nombre']} - Capacidad: {flavour['capacidad']}, CPU: {flavour['cpu']}")
+            print(f"{i}. {flavour['nombre']} - RAM: {flavour['ram']}, CPU: {flavour['cpu']}, Disco: {flavour['disk']}")
 
         # Solicitar al usuario que elija un flavour
         while True:
@@ -260,7 +263,7 @@ def agregarVM(datos):
         # Mostrar opciones de imágenes
         print(Fore.CYAN+"Opciones de Imágenes:")
         for i, imagen in enumerate(imagenes, start=1):
-            print(f"{i}. {imagen}")
+            print(f"{i}. {imagen['nombre']}")
 
         # Solicitar al usuario que elija una imagen
         while True:
@@ -275,7 +278,16 @@ def agregarVM(datos):
                 print(Fore.RED+"Ingrese un número entero válido.")
 
         # Crear la nueva VM y agregarla a "vms"
-        nueva_vm = {"nombre": nombre_nueva_vm, "capacidad": seleccion_flavour["capacidad"], "cpu": seleccion_flavour["cpu"], "imagen": seleccion_imagen}
+        nueva_vm = {
+                            "nombre": nombre_nueva_vm,
+                            "alias": "",
+                            "ram": seleccion_flavour['ram'],
+                            "cpu": seleccion_flavour['cpu'],
+                            "disk": seleccion_flavour['disk'],
+                            "imagen": seleccion_imagen['filename'],
+                            "idOpenstackImagen": seleccion_imagen['idglance'],
+                            "idOpenstackFlavor": seleccion_flavour['idflavorglance']
+                    }
         datos["vms"].append(nueva_vm)
         print(Fore.GREEN+f"Máquina virtual '{nombre_nueva_vm}' creada con éxito.")
 
