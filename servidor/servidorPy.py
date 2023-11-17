@@ -1,13 +1,12 @@
 #!/usr/bin/python
 from fastapi import FastAPI, Request
-from typing import Optional, List, Union
-from pydantic import BaseModel, validator, ValidationError
 from fastapi.responses import HTMLResponse
 import platform, os, uvicorn, json, ast
 from resourceManager import validarRecursosDisponibles
 from vmPlacement import crearSlice
 from vmPlacement import modificarSlice
-
+from modelosBD import *
+from modelosConsultas import *
 app = FastAPI()
 
 sistema = platform.system()
@@ -15,122 +14,6 @@ if(sistema =="Linux"):
     from funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
 else:
     from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
-
-#####################################################################
-########################## MODELADOS ################################
-#####################################################################
-
-####################### MODELOS CONSULTAS ###########################
-class Usuario(BaseModel):
-    idUsuario: Optional[int] = None
-    username: str
-    passwd: str
-    email: str
-    Roles_idRoles: int
-class Flavor(BaseModel):
-    idflavors: Optional[int] = None
-    ram_mb: float
-    disk_gb: float
-    cpus: int
-    nombre: str
-    idflavorglance: Optional[str] = None
-class Recursos(BaseModel):
-    idRecursos: Optional[int] = None
-    worker: Optional[str]
-    memoriaUso: Optional[int]
-    memoriaTotal: Optional[int]
-    discoAsignado: Optional[int]
-    discoTotal: Optional[int]
-    cpusAsignado: Optional[int]
-    cpuTotal: Optional[int]
-class UserValidation(BaseModel):
-    username: str
-    password: str
-class Imagen(BaseModel):
-    nombre: str
-    filename: Optional[str] = None
-    idglance: Optional[str] = None
-    VMs_idRecursos: Optional[int] = None
-class Slice(BaseModel):
-    idSlice: Optional[int] = None
-    nombre: Optional[str]
-    idOpenstackproject: Optional[str] = None
-    idLinuxproject: Optional[str] = None
-    usuario_idUsuario: Optional[int]
-    fecha: Optional[str] =  None
-    sliceJSON: str
-
-########################### MODELOS BD ##############################
-class FlavorBD:
-    def __init__(self, idflavors, ram_mb, disk_gb, cpus, nombre, idflavorglance):
-        self.nombre = nombre
-        self.ram = ram_mb
-        self.cpu = cpus
-        self.disk = disk_gb
-        self.idflavors = idflavors
-        self.idflavorglance = idflavorglance
-    def to_dict(self):
-        return {
-            'idflavors': self.idflavors,
-            'ram_mb': self.ram,
-            'disk_gb': self.disk, 
-            'cpus': self.cpu,
-            'nombre': self.nombre,
-            'idflavorglace': self.idflavorglance
-        }
-class RecursosBD:
-    def __init__(self, idRecursos, worker, memoriaUso, memoriaTotal, discoAsignado, discoTotal, cpusAsignado, cpuTotal):
-        self.idRecursos = idRecursos
-        self.worker = worker
-        self.memoriaUso = memoriaUso
-        self.memoriaTotal = memoriaTotal
-        self.discoAsignado = discoAsignado
-        self.discoTotal = discoTotal
-        self.cpusAsignado = cpusAsignado
-        self.cpuTotal = cpuTotal
-    def to_dict(self):
-        return {
-            'idRecursos': self.idRecursos,
-            'worker': self.worker,
-            'memoriaUso': self.memoriaUso, 
-            'memoriaTotal': self.memoriaTotal,
-            'discoAsignado': self.discoAsignado,
-            'discoTotal': self.discoTotal,
-            'cpusAsignado': self.cpusAsignado,
-            'cpuTotal': self.cpuTotal
-        }
-class SliceBD:
-    def __init__(self, idSlice, nombre, idOpenstackproject, idLinuxproject, usuario_idUsuario, fecha, sliceJSON):
-        self.idSlice = idSlice
-        self.nombre = nombre
-        self.idOpenstackproject = idOpenstackproject
-        self.idLinuxproject = idLinuxproject
-        self.usuario_idUsuario = usuario_idUsuario
-        self.fecha = fecha
-        self.sliceJSON = sliceJSON
-    def to_dict(self):
-        return {
-            'idSlice': self.idSlice,
-            'nombre': self.nombre,
-            'idOpenstackproject': self.idOpenstackproject, 
-            'idLinuxproject': self.idLinuxproject,
-            'usuario_idUsuario': self.usuario_idUsuario,
-            'fecha': self.fecha,
-            'sliceJSON': self.sliceJSON
-        }
-class ImagenBD:
-    def __init__(self, idImagenes, nombre, filename, idglance):
-        self.idImagenes = idImagenes
-        self.nombre = nombre
-        self.filename = filename
-        self.idglance = idglance
-    def to_dict(self):
-        return {
-            'idImagenes': self.idImagenes,
-            'nombre': self.nombre,
-            'filename': self.filename, 
-            'idglance': self.idglance
-        }
 
 disponible = True
 usuarioEnAtencion = 0
@@ -162,7 +45,7 @@ async def log():
         return HTMLResponse(content="<p>Ocurrió un error al intentar abrir el archivo</p>", status_code=500)
 
 ########################## USUARIO #############################
-@app.post("/usuario/validar", tags=["Usuarios"])
+@app.post("/usuario/validar", tags=["Usuario"])
 async def usuarioValidar(uservalid: UserValidation):
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
     print(type(result), result)
@@ -170,12 +53,12 @@ async def usuarioValidar(uservalid: UserValidation):
         return {"result": result[0]}
     else:
         return {"result":"Incorrecto"}
-@app.get("/usuario/listar", tags=["Usuarios"])
+@app.get("/usuario/listar", tags=["Usuario"])
 async def usuarioListar():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, Roles_idRoles FROM usuario", ())
     listaUsuarios = [list(tupla) for tupla in result]
     return {"result": listaUsuarios}
-@app.post("/usuario/crear", tags=["Usuarios"])
+@app.post("/usuario/crear", tags=["Usuario"])
 async def usuarioCrear(user: Usuario):
     try:
         print(user.Roles_idRoles, "tipo: ",type(user.Roles_idRoles))
@@ -185,7 +68,7 @@ async def usuarioCrear(user: Usuario):
     except Exception as e:
         print("Error: ", e)
         return {"result":"Error"}
-@app.delete("/usuario/eliminar/{idUser}", tags=["Usuarios"])
+@app.delete("/usuario/eliminar/{idUser}", tags=["Usuario"])
 async def usuarioEliminar(idUser: int):
     try:
         ejecutarConsultaSQL("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
