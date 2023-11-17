@@ -140,12 +140,12 @@ usuarioEnAtencion = 0
 #####################################################################
 
 ######################### GENERALES #############################
-@app.get("/")
+@app.get("/", tags=["Conexión exitosa"])
 async def hello():
     global slicesUsuarios
     print(slicesUsuarios)
     return {"result":"hello world from remote node"}
-@app.get("/log")
+@app.get("/log", tags=["Log"])
 async def log():
     try:
         filename = "salida.log"
@@ -161,8 +161,8 @@ async def log():
     except IOError:
         return HTMLResponse(content="<p>Ocurrió un error al intentar abrir el archivo</p>", status_code=500)
 
-########################## USUARIO ##############################
-@app.post("/usuario/validar")
+########################## USUARIO #############################
+@app.post("/usuario/validar", tags=["Usuarios"])
 async def usuarioValidar(uservalid: UserValidation):
     result = ejecutarConsultaSQL("SELECT * FROM usuario where (username= %s and passwd= %s)", (uservalid.username, uservalid.password))
     print(type(result), result)
@@ -170,12 +170,12 @@ async def usuarioValidar(uservalid: UserValidation):
         return {"result": result[0]}
     else:
         return {"result":"Incorrecto"}
-@app.get("/usuario/listar")
+@app.get("/usuario/listar", tags=["Usuarios"])
 async def usuarioListar():
     result = ejecutarConsultaSQL("SELECT idUsuario, username, email, Roles_idRoles FROM usuario", ())
     listaUsuarios = [list(tupla) for tupla in result]
     return {"result": listaUsuarios}
-@app.post("/usuario/crear")
+@app.post("/usuario/crear", tags=["Usuarios"])
 async def usuarioCrear(user: Usuario):
     try:
         print(user.Roles_idRoles, "tipo: ",type(user.Roles_idRoles))
@@ -185,7 +185,7 @@ async def usuarioCrear(user: Usuario):
     except Exception as e:
         print("Error: ", e)
         return {"result":"Error"}
-@app.get("/usuario/eliminar/{idUser}")
+@app.delete("/usuario/eliminar/{idUser}", tags=["Usuarios"])
 async def usuarioEliminar(idUser: int):
     try:
         ejecutarConsultaSQL("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
@@ -193,8 +193,8 @@ async def usuarioEliminar(idUser: int):
     except:
         return {"result":"Error"}
 
-########################## IMAGENES ##############################
-@app.get("/imagenes/listar")
+########################## IMAGENES ############################
+@app.get("/imagenes/listar", tags=["Imágenes"])
 async def imagenesListar():
     result = ejecutarConsultaSQL("SELECT * FROM imagenes", ())
     listaImagenes = []
@@ -202,14 +202,14 @@ async def imagenesListar():
         print(elem)
         listaImagenes.append(ImagenBD(elem[0], elem[1], elem[2], elem[3]))
     return {"result": listaImagenes}
-@app.get("/imagen/eliminar/{idImagen}")
+@app.delete("/imagen/eliminar/{idImagen}", tags=["Imágenes"])
 async def imagenesEliminar(idImagen: str):
     try:
         ejecutarConsultaSQL("DELETE FROM imagenes WHERE idImagenes = %s", (idImagen,))
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
-@app.post("/imagen/crear")
+@app.post("/imagen/crear", tags=["Imágenes"])
 async def imagenesCrear(imagen: Imagen):
     print(imagen)
     try:
@@ -218,8 +218,8 @@ async def imagenesCrear(imagen: Imagen):
     except:
         return {"result":"Error"}
 
-########################## FLAVORS ##############################
-@app.get("/flavors/listar")  # allFlavors
+########################## FLAVORS #############################
+@app.get("/flavors/listar", tags=["Flavors"])  # allFlavors
 async def flavorsListar():
     result = ejecutarConsultaSQL("SELECT * FROM flavors", ())
     listaFlavors = []
@@ -227,14 +227,14 @@ async def flavorsListar():
         print(elem)
         listaFlavors.append(FlavorBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5]))
     return {"result": listaFlavors}
-@app.get("/flavors/eliminar/{idFlavor}")   # eliminarFlavor
+@app.delete("/flavors/eliminar/{idFlavor}", tags=["Flavors"])   # eliminarFlavor
 async def flavorsEliminar(idFlavor: int):
     try:
         ejecutarConsultaSQL("DELETE FROM flavors WHERE idflavors = %s", (idFlavor,))
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
-@app.post("/flavors/crear")
+@app.post("/flavors/crear", tags=["Flavors"])
 async def flavorsCrear(flavor: Flavor):
     try:
         result = ejecutarConsultaSQL("INSERT INTO flavors (ram_mb, disk_gb, cpus, nombre, idflavorglance) VALUES (%s, %s, %s, %s, %s)",
@@ -244,8 +244,8 @@ async def flavorsCrear(flavor: Flavor):
         print("Error: ", e)
         return {"result":"Error"}
     
-########################## RECURSOS ##############################
-@app.post("/recursos/crear")
+########################## RECURSOS ############################
+@app.post("/recursos/crear", tags=["Recursos"])
 async def recursosCrear(recurso: Recursos):
     try:
         result = ejecutarConsultaSQL("INSERT INTO recursos (worker, memoriaUso, memoriaTotal, discoAsignado, discoTotal, cpusAsignado, cpuTotal) VALUES (%s, %s, %s, %s, %s, %s, %s)",
@@ -254,7 +254,7 @@ async def recursosCrear(recurso: Recursos):
     except Exception as e:
         print("Error: ", e)
         return {"result":"Error"}
-@app.get("/recursos/listar")
+@app.get("/recursos/listar", tags=["Recursos"])
 async def recursosListar():
     result = ejecutarConsultaSQL("SELECT * FROM recursos", ())
     listaRecursos = []
@@ -262,7 +262,7 @@ async def recursosListar():
         print(elem)
         listaRecursos.append(RecursosBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], elem[6], elem[7]))
     return {"result": listaRecursos}
-@app.post("/recursos/actualizar")
+@app.put("/recursos/actualizar", tags=["Recursos"])
 async def recursosActualizar(recurso: Recursos):
     try:
         result = ejecutarConsultaSQL("UPDATE recursos SET worker = %s, memoriaUso = %s, memoriaTotal=%s, discoAsignado=%s, discoTotal=%s, cpusAsignado=%s, cpuTotal=%s where idRecursos = %s",
@@ -271,7 +271,7 @@ async def recursosActualizar(recurso: Recursos):
     except Exception as e:
         print("Error: ", e)
         return {"result":"Error"}
-@app.get("/recursos/eliminar/{idRecursos}")
+@app.delete("/recursos/eliminar/{idRecursos}", tags=["Recursos"])
 async def recursosEliminar(idRecursos: int):
     try:
         ejecutarConsultaSQL("DELETE FROM recursos WHERE idRecursos = %s", (idRecursos,))
@@ -279,34 +279,8 @@ async def recursosEliminar(idRecursos: int):
     except:
         return {"result":"Error"}
 
-########################### SLICES  ANTIGUO ###############################
-@app.get("/slice/listarPorUsuario/{idUser}")
-async def allSlicesUser(idUser: int):
-    result = ejecutarConsultaSQL("SELECT * FROM slice where usuario_idUsuario = %s", (idUser,))
-    listaSlices = []
-    if(len(result)==0):
-        return {"result":[]}
-    else:
-        for elem in result:
-            listaSlices.append(SliceBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], json.loads(elem[6])).to_dict())
-        return {"result": listaSlices}
-
-@app.post("/eliminarSlice/{idUser}")
-async def eliminarSlice(idUser: str, request: Request):
-    global slicesUsuarios
-    data = await request.json()
-    listaSlicesUsuariosModif = slicesUsuarios
-    for slice in slicesUsuarios:
-        idUsuario = next(iter(slice.keys()))
-        nombre = slice[idUsuario]['nombre']
-        if(nombre ==data[idUser]['nombre']):
-            sliceEliminar = slice
-    listaSlicesUsuariosModif.remove(sliceEliminar)
-    slicesUsuarios = listaSlicesUsuariosModif
-    return {"result":"Eliminado con éxito"}
-
-########################### SLICES NUEVO ###############################
-@app.get("/slice/listar")
+########################### SLICES NUEVO #######################
+@app.get("/slice/listar", tags=["Slices"])
 async def sliceListar():
     result = ejecutarConsultaSQL("SELECT idSlice, nombre, idOpenstackproject, idLinuxProject, usuario_idUsuario, fecha, sliceJSON, username FROM slice INNER JOIN usuario ON slice.usuario_idUsuario = usuario.idUsuario", ())
     listaSlices = []
@@ -316,9 +290,27 @@ async def sliceListar():
         for elem in result:
             listaSlices.append({"user": elem[7] , "slice":SliceBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], json.loads(elem[6])).to_dict()})
         return {"result": listaSlices}
+@app.get("/slice/listarPorUsuario/{idUser}", tags=["Slices"])
+async def sliceListarPorUsuario(idUser: int):
+    result = ejecutarConsultaSQL("SELECT * FROM slice where usuario_idUsuario = %s", (idUser,))
+    listaSlices = []
+    if(len(result)==0):
+        return {"result":[]}
+    else:
+        for elem in result:
+            listaSlices.append(SliceBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], json.loads(elem[6])).to_dict())
+        return {"result": listaSlices}
+@app.delete("/slice/eliminar/{idUser}/{idSlice}", tags=["Slices"])
+async def sliceEliminar(idUser: int, idSlice:int):
+    try:
+        ejecutarConsultaSQL("DELETE FROM slice WHERE (idSlice= %s and usuario_idUsuario = %s)", (idSlice,idUser))
+        return {"result":"Correcto"}
+    except:
+        return {"result":"Error"}
+
 
 ########################### RESOURCE MANAGER & VM PLACEMENT ###############################
-@app.get("/disponible/{idUser}")
+@app.get("/disponible/{idUser}", tags=["RM & VM"])
 async def disponibleValidar(idUser: int):
     global disponible, usuarioEnAtencion
     if(disponible == True):
@@ -329,7 +321,7 @@ async def disponibleValidar(idUser: int):
     else:
         print("Ocupado")
         return {"result":"Ocupado"}
-@app.post("/validacionRecursos/{idUser}")
+@app.post("/validacionRecursos/{idUser}", tags=["RM & VM"])
 async def validacionRecursosDisponibles(idUser: int, request: Request):
     global usuarioEnAtencion, disponible
     if(usuarioEnAtencion == idUser):
@@ -343,8 +335,7 @@ async def validacionRecursosDisponibles(idUser: int, request: Request):
                     recursos para generar este slice"}
     else:
         return {"result":"El servidor está atentiendo a otro usuario, espere su turno"}
-
- 
+    
 
 ########################## INICIALIZACIÓN ##############################
 if __name__ == "__main__":

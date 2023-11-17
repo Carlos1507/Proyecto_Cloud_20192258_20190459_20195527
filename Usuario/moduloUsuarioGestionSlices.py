@@ -45,8 +45,8 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                     if nombre == nombreSlice:
                         data = slice
                         break
-                response = requests.post(url = endpointBase+"/eliminarSlice/"+str(usuario.idUser), 
-                                    headers = {"Content-Type": "application/json"}, data=json.dumps(data))
+                response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice']), 
+                                    headers = {"Content-Type": "application/json"})
                 if(response.status_code==200):
                     respuesta = response.json()['result']
                     if(respuesta == "Eliminado con éxito"):
@@ -249,6 +249,7 @@ def agregarVM(datos, endpointBase):
             print(f"{i}. {flavour['nombre']} - RAM: {flavour['ram']}, CPU: {flavour['cpu']}, Disco: {flavour['disk']}")
 
         # Solicitar al usuario que elija un flavour
+        print(Fore.CYAN+"================= FLAVORS =================")
         while True:
             try:
                 opcion_flavour = int(input("Seleccione el número del flavour para la nueva VM: "))
@@ -266,6 +267,7 @@ def agregarVM(datos, endpointBase):
             print(f"{i}. {imagen['nombre']}")
 
         # Solicitar al usuario que elija una imagen
+        print(Fore.CYAN+"================= IMÁGENES =================")
         while True:
             try:
                 opcion_imagen = int(input("Seleccione el número de la imagen para la nueva VM: "))

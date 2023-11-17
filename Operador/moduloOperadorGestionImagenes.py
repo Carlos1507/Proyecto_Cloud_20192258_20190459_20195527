@@ -58,7 +58,7 @@ def eliminarImagen(endpointBase):
         imagenesOpciones = [imagen[1] for imagen in imagenes]
         imagenNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=imagenesOpciones).ask()
         idEliminar = [imagen[0] for imagen in imagenes if imagen[1] == imagenNombre] [0]
-        resultadoEliminar = requests.get(url = endpointBase+"/imagen/eliminar/"+str(idEliminar), 
+        resultadoEliminar = requests.delete(url = endpointBase+"/imagen/eliminar/"+str(idEliminar), 
                                          headers = {"Content-Type": "application/json"})
         execRemoto("rm imagenes/"+imagenNombre, "10.20.10.221")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):

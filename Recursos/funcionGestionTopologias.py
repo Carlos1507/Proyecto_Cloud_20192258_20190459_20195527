@@ -2,7 +2,7 @@ import networkx as nx
 import os
 import matplotlib.pyplot as plt
 
-def graficarTopologia(title, listaVMs, listaEnlaces, flagGuardar):
+def graficarTopologia(title, listaVMs, listaEnlaces, flagGuardar=False):
     G = nx.Graph()
 
     G.add_nodes_from(listaVMs)

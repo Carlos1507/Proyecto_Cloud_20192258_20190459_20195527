@@ -80,12 +80,13 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
                                         headers = {"Content-Type": "application/json"})
         imagenes = response.json()['result']
         imagenesOpciones = [imagen['nombre'] for imagen in imagenes]
+        print(Fore.CYAN+"================= IMÁGENES =================")
         imagenChoosedName = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
         response = requests.get(url = endpointBase+"/flavors/listar", 
                                         headers = {"Content-Type": "application/json"})
         flavors = response.json()['result']
-        
+        print(Fore.CYAN+"================= FLAVORS =================")
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("N°",justify="center")
         table.add_column("Nombre", justify="center")

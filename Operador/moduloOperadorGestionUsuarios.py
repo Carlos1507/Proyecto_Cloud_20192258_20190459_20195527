@@ -99,7 +99,7 @@ def eliminarUsuario(usuario, endpointBase):
             gestionarUsuarios(usuario, endpointBase)
         else:
             idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
-            resultadoEliminar = requests.get(url = endpointBase+"/usuario/eliminar/"+str(idEliminar), 
+            resultadoEliminar = requests.delete(url = endpointBase+"/usuario/eliminar/"+str(idEliminar), 
                                             headers = {"Content-Type": "application/json"})
             if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
                 print(Fore.GREEN+"Usuario Eliminado Correctamente")

@@ -35,6 +35,7 @@ def agregarVM(endpointBase, listaVMs):
                                         headers = {"Content-Type": "application/json"})
     imagenes = response.json()['result']
     imagenesOpciones = [imagen['nombre'] for imagen in imagenes]
+    print(Fore.CYAN+"================= IMÁGENES =================")
     imagenChoosedName = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
     response = requests.get(url = endpointBase+"/flavors/listar", 
@@ -56,6 +57,7 @@ def agregarVM(endpointBase, listaVMs):
         table.add_row(str(index), nombre, str(ram), str(disk), str(cpus))
         index+=1
     console.print(table)
+    print(Fore.CYAN+"================= FLAVORS =================")
     flavorName = [flavor['nombre'] for flavor in flavors]
     flavorChoosedName = questionary.select("Seleccione un flavor: ", choices=flavorName).ask()
     flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorChoosedName][0]

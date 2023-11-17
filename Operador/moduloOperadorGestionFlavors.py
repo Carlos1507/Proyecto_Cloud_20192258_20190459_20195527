@@ -74,7 +74,7 @@ def eliminarFlavor(endpointBase):
         flavorOpciones = [flavor['nombre'] for flavor in flavors]
         flavorNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=flavorOpciones).ask()
         flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorNombre][0]
-        resultadoEliminar = requests.get(url = endpointBase+"/flavors/eliminar/"+str(flavor_seleccionado['idflavors']), 
+        resultadoEliminar = requests.delete(url = endpointBase+"/flavors/eliminar/"+str(flavor_seleccionado['idflavors']), 
                                          headers = {"Content-Type": "application/json"})
         execRemoto("openstack flavor delete "+ flavor_seleccionado['idflavorglance'], "10.20.10.221")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
