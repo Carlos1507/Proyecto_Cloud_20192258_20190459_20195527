@@ -2,8 +2,10 @@ import os, platform, json
 sistema = platform.system()
 if(sistema =="Linux"):
     from funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
+    from resourceManager import execLocal as execCommand
 else:
     from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
+    from resourceManager import execRemoto as execCommand
 
 def crearSlice(data, idUser):
     print(data['vms'])

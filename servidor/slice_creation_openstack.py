@@ -5,14 +5,22 @@ from resourceManager import execRemoto
 from openstack_sdk import create_subnet
 from openstack_sdk import create_port
 from openstack_sdk import create_instance
-import json
+import json, os, platform
+sistema = platform.system()
+
+if(sistema =="Linux"):
+    from funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
+    from resourceManager import execLocal as execCommand
+else:
+    from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
+    from resourceManager import execRemoto as execCommand
 
 def crearProyecto(username,password,project_name):
     #Crear nuevo proyecto:
-    execRemoto(f"openstack project create {project_name}","10.20.10.221")
+    execCommand(f"openstack project create {project_name}","10.20.10.221")
 
     # Asignar al usuario el rol "admin" en el proyecto
-    execRemoto(f"openstack role add --project {project_name} --user {username} admin","10.20.10.221")
+    execCommand(f"openstack role add --project {project_name} --user {username} admin","10.20.10.221")
 
     # Datos previos
     gatewayIP = '10.20.10.221'
@@ -141,7 +149,7 @@ if __name__ == "__main__":
 
     # Crear proyecto
     token_for_project = crearProyecto(username,password,project_name)
-    project_id = execRemoto("openstack project show " + project_name + " | grep ' id ' | awk '{print $4}'","10.20.10.221")
+    project_id = execCommand("openstack project show " + project_name + " | grep ' id ' | awk '{print $4}'","10.20.10.221")
 
     # Crear redes
     net_id_list = []

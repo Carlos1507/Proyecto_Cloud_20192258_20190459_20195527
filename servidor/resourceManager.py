@@ -52,3 +52,28 @@ def execRemoto(command, host):
         print(f"Error {str(e)}")
     finally:
         client.close()
+
+def execLocal(command, host):
+    username = "ubuntu"
+    password = "ubuntu"
+    client = paramiko.SSHClient()
+    comandos = [". admin-openrc", command]
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect(host, "22", username,password)
+        
+        _stdin, _stdout, _stderr = client.exec_command(comandos[0]+ " ; "+comandos[1])
+        output = _stdout.read().decode().strip()
+        error = _stderr.read().decode().strip()
+        #print(f"Comando ejecutado: {command}")
+        #print(f"Resultado: {output}")
+        #print(f"Error: {error}")
+        return output
+    except Exception as e:
+        print(f"Error {str(e)}")
+    finally:
+        client.close()
+
+if __name__ == "__main__":
+    resultado = execRemoto("openstack hypervisor list", "10.20.10.221")
+    print(resultado)
