@@ -33,16 +33,22 @@ def gestionarSlices(usuario, endpointBase):
         if(confirmation):
             nombreSelected = questionary.select("¿Cuál desea eliminar?", choices=nombresSlices).ask()
             for slice in slices:
-                nombre = slice['nombre']
+                nombre = slice['slice']['nombre']
                 if nombre == nombreSelected:
                     data = slice
                     break
-            response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice']), 
-                                headers = {"Content-Type": "application/json"})
-            if(response.status_code==200):
-                respuesta = response.json()['result']
-                if(respuesta == "Eliminado con éxito"):
-                    print(Fore.RED+"Slice eliminado")
+            confirmation = questionary.confirm("¿Está seguro que desea eliminar este slice?\nEsta acción no es reversible").ask()
+            if(confirmation):
+                response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(data['slice']['usuario_idUsuario'])+"/"+str(data['slice']['idSlice']), 
+                                    headers = {"Content-Type": "application/json"})
+                if(response.status_code==200):
+                    respuesta = response.json()['result']
+                    if(respuesta == "Correcto"):
+                        print(Fore.GREEN+"Slice eliminado")
+                else:
+                    print(Fore.RED+"Error"+response.status_code)
+            else:
+                return
     else:
         print(Fore.RED + "Error en el servidor")
     return

@@ -1,4 +1,5 @@
 import questionary
+from colorama import Fore, Style, init
 from Operador.moduloOperadorGestionUsuarios import gestionarUsuarios as gestionUsuarios
 from Operador.moduloOperadorGestionSlices import gestionarSlices as gestionSlices
 from Operador.moduloOperadorGestionImagenes import gestorImagenes as gestionImagenes
@@ -12,6 +13,8 @@ def menu(usuarioLog, endpointBase):
         opcionesMenu = ["1. Gestionar Usuarios", "2. Gestionar Slices","3. Zonas de Disponibilidad","4. Gestión de Imágenes","5. Configurar flavors","Cerrar Sesión"]
     else:                     # ACCIONES USUARIO
         opcionesMenu = ["1. Crear Slice","2. Listar Slices","Cerrar Sesión"]
+    nombreRol = "OPERADOR" if usuarioLog.rol==1 else "USUARIO"
+    print(Fore.CYAN+"================= MENÚ PRINCIPAL "+nombreRol+" =================")
     opcion = questionary.select("¿Qué acción desea hacer hoy?", choices=opcionesMenu).ask()
     
     if(opcion == "Cerrar Sesión"):
