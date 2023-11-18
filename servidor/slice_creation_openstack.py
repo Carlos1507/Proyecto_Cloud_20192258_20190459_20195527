@@ -110,35 +110,43 @@ def crearVM(token_for_project,instance_name,instance_flavor_id,instance_image_id
     novaEndpoint = 'http://' + gatewayIP + ':8774/v2.1'
     # Ejecutando Instances Creation
     resp1 = create_instance(novaEndpoint, token_for_project, instance_name, instance_flavor_id, instance_image_id, instance_networks)
-    print(resp1.status_code)
     if resp1.status_code == 202:
-        print('INSTANCE CREATED SUCCESSFULLY')
         instance_created = resp1.json()
         instance_id = instance_created["server"]["id"]
         return instance_id
     else:
         print('FAILED INSTANCE CREATION')
         return
+    
+def borrarSlice(proyectId):
+    execCommand("openstack server list --project "+proyectId+" -f value -c ID | xargs -I {} openstack server delete {}","10.20.10.221")
+    execCommand("openstack port list --project "+proyectId+" -f value -c ID | xargs -I {} openstack port delete {}","10.20.10.221")
+    execCommand("openstack subnet list --project "+proyectId+" -f value -c ID | xargs -I {} openstack subnet delete {}","10.20.10.221")
+    execCommand("openstack network list --project "+proyectId+" -f value -c ID | xargs -I {} openstack network delete {}","10.20.10.221")
+    execCommand("openstack project delete "+proyectId,"10.20.10.221")
 
 if __name__ == "__main__":
 
     # JSON de una topología lineal
     datos = {
         "vms": [
-            {"nombre": "vm1", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"},
-            {"nombre": "vm2", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"},
-            {"nombre": "vm3", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"},
-            {"nombre": "vm4", "capacidad": "1024", "cpu": "2", "imagen": "cirros.img"}
+            {"nombre": "vm1", "alias": "compute1", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
+            {"nombre": "vm2", "alias": "SwitchOVS", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
+            {"nombre": "vm3", "alias": "compute2", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"}
         ],
-        "enlaces": [["vm2", "vm1"], ["vm3", "vm2"], ["vm4", "vm3"]],
-        "nombre": "linea1",
-        "fecha": "08/11/2023"
+        "enlaces": [["vm2", "vm1"],["vm3", "vm2"]],
+        "nombre": "lineal3",
+        "fecha": "17/11/2023"
     }
 
     # Datos previos
     username = 'angelo123'
-    password = 'N4Ak=0GV'
-    project_name = 'prueba'
+    password = 'b7[(]FeK'  #pedir a usuario
+    project_name = 'prueba'  #pedir a usuario
+    instance_flavor_id = '766fa567-86c4-42b4-a3a1-f2316cdb0b7d' #200MBRAM_1VCPUs_1GBRoot
+    instance_image_id = '474e67b0-5022-43e7-9312-51085691a37e' #cirros
+
+
     ip_version = '4'
     numEnlaces = len(datos["enlaces"])
     base_cidr = '10.0.'
@@ -170,15 +178,22 @@ if __name__ == "__main__":
 
     # Crear instancias
     instance_id_list = []
-    instance_flavor_id = '766fa567-86c4-42b4-a3a1-f2316cdb0b7d' #200MBRAM_1VCPUs_1GBRoot
-    instance_image_id = '474e67b0-5022-43e7-9312-51085691a37e' #cirros
     for instance_name in nombresVm:
         filtered_dict = {key: value for item in port_id_list for key, value in item.items() if instance_name in key}
         instance_networks = [{"port": value} for key, value in filtered_dict.items() if instance_name in key]
-        instance_id = crearVM(token_for_project,instance_name,instance_flavor_id,instance_image_id,instance_networks)
+        vm_encontrada = next((vm for vm in datos["vms"] if vm["nombre"] == instance_name), None)
+        alias_o_nombre = vm_encontrada["alias"] if vm_encontrada and vm_encontrada["alias"] else instance_name
+        instance_id = crearVM(token_for_project,alias_o_nombre,instance_flavor_id,instance_image_id,instance_networks)
         instance_id_list.append({instance_name: instance_id})
-    print(instance_id_list)
-    
 
-    # Para crear slice, pedir q ingrese contraseña?
-    #crearVM('angelo123','N4Ak=0GV','prueba','gira','giraSub','10.0.1.0/24')
+    # Generar links de acceso
+    instance_link_list = []
+    for instance_id_dict in instance_id_list:
+        for vm_name, vm_id in instance_id_dict.items():
+            link = execCommand("nova get-vnc-console "+vm_id+" novnc | grep novnc | awk '{print $4}'","10.20.10.221")
+            instance_link_list.append({vm_name: link})
+    for enlace in instance_link_list:
+        for key, value in enlace.items():
+            enlace[key] = value.replace('controller', '10.20.10.221')
+    print(instance_link_list)
+
