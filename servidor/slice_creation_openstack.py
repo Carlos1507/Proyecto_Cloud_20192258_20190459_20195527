@@ -198,5 +198,5 @@ if __name__ == "__main__":
     password = 'b7[(]FeK'  #pedir a usuario
     project_name = 'prueba'  #pedir a usuario
 
-    #crearSlice(datos,username,password,project_name)
+    crearSlice(datos,username,password,project_name)
     #borrarSlice(project_name)
