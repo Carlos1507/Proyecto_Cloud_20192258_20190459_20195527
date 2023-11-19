@@ -17,6 +17,7 @@ def gestionarSlices(usuario, endpointBase):
         table.add_column("Fecha", justify="center")
         table.add_column("Número VMs", justify="center")
         table.add_column("Número enlaces", justify="center")
+        table.add_column("Zona de disponibilidad", justify="center")
         n = 1
         nombresSlices = []
         for slice in slices:
@@ -26,7 +27,8 @@ def gestionarSlices(usuario, endpointBase):
             fecha = slice['slice']['fecha']
             numVMs = str(len(slice['slice']['sliceJSON']['vms']))
             numLinks = str(len(slice['slice']['sliceJSON']['enlaces']))
-            table.add_row(str(n),username, nombreSlice, fecha, numVMs, numLinks)
+            az = slice['slice']['sliceJSON']['AZ']
+            table.add_row(str(n),username, nombreSlice, fecha, numVMs, numLinks, az)
             n+=1
         console.print(table)
         confirmation = questionary.confirm("¿Desea eliminar algún slice?").ask()

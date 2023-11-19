@@ -26,6 +26,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
             table.add_column("Fecha", justify="center")
             table.add_column("Número Nodos", justify="center")
             table.add_column("Número enlaces", justify="center")
+            table.add_column("Zona de disponibilidad", justify="center")
             index = 1
             nombresSlices = []
             for slice in slices:
@@ -34,7 +35,8 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                 fecha = slice['fecha']
                 numVMs = str(len(slice['sliceJSON']['vms']))
                 numLinks = str(len(slice['sliceJSON']['enlaces']))
-                table.add_row(str(index), nombreSlice, fecha, numVMs,numLinks)
+                az = slice['sliceJSON']['AZ']
+                table.add_row(str(index), nombreSlice, fecha, numVMs,numLinks, az)
                 index+=1
             console.print(table)
             opcionesGestion = ["a. Editar Slices","b. Eliminar Slices","Regresar"]
