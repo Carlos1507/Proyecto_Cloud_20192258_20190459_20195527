@@ -267,15 +267,16 @@ if __name__ == "__main__":
 
     # JSON de una topología lineal
     datos = {
-        "vms": [
-            {"nombre": "vm1", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
-            {"nombre": "vm2", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
-            {"nombre": "vm3", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"}, 
-            {"nombre": "vm4", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"}
+        'vms': [
+            {'nombre': 'vm1', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
+            {'nombre': 'vm2', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
+            {'nombre': 'vm3', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
+            {'nombre': 'vm4', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
+            {'nombre': 'vm5', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'}
         ],
-        "enlaces": [('vm2', 'vm1'), ('vm3', 'vm2'), ('vm4', 'vm3')],
-        "nombre": "lineal3",
-        "fecha": "18/11/2023",
+        'enlaces': [('vm1', 'vm2'), ('vm1', 'vm3'), ('vm1', 'vm4'), ('vm1', 'vm5'), ('vm2', 'vm3'), ('vm2', 'vm4'), ('vm2', 'vm5'), ('vm3', 'vm4'), ('vm3', 'vm5'), ('vm4', 'vm5')],
+        'nombre': 'malla1',
+        'fecha': '19/11/2023',
         'AZ': 'Golden Zone'
     }
 
@@ -289,7 +290,7 @@ if __name__ == "__main__":
 
 
     ## Editar: Eliminar una VM
-    #id_Vm_OpenStack = "334eb831-771b-471f-9846-74c232c19000"
+    #id_Vm_OpenStack = "56207a69-795c-47ed-9a1f-a7f58e89e474"
     #name_project = "prueba"
     #edit_EliminarInstancia(id_Vm_OpenStack,name_project)
 
@@ -376,3 +377,8 @@ if __name__ == "__main__":
             execCommand("openstack subnet delete "+idNetwork,"10.20.10.221")
             # Eliminar la red
             execCommand("openstack network delete "+idNetwork,"10.20.10.221")
+
+
+    
+
+    
