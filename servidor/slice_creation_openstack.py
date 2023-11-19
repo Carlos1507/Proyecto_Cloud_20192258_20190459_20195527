@@ -178,7 +178,16 @@ def crearSlice(datos,username,password,project_name):
     for enlace in instance_link_list:
         for key, value in enlace.items():
             enlace[key] = value.replace('controller', '10.20.10.221')
-    print(instance_link_list)
+
+    # Enviar diccionario {'vm1': ['id', 'link'], ...}
+    dic_vm_id_link = {}
+    for instance_id, instance_link in zip(instance_id_list, instance_link_list):
+        for key_id, value_id in instance_id.items():
+            for key_link, value_link in instance_link.items():
+                if key_id == key_link:
+                    dic_vm_id_link[key_id] = [value_id, value_link]
+
+    return dic_vm_id_link
 
 def edit_EliminarInstancia(id_Vm_OpenStack,name_project):
     numPorts = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | wc -l","10.20.10.221")
@@ -285,7 +294,8 @@ if __name__ == "__main__":
     password = 'ah7Z6JQQ'  #pedir a usuario
     project_name = 'prueba'  #pedir a usuario
 
-    #crearSlice(datos,username,password,project_name)
+    dic_vm_id_link = crearSlice(datos,username,password,project_name)
+    print(dic_vm_id_link)
     #borrarSlice(project_name)
 
 
@@ -295,88 +305,7 @@ if __name__ == "__main__":
     #edit_EliminarInstancia(id_Vm_OpenStack,name_project)
 
 
-    # Editar: Eliminar un enlace
-    id1_vm_openst = "6c7c9381-db5f-4ffd-9ef3-57169250d07e"
-    nombre1_NOalias = "vm4"
-    id2_vm_openst = "9a554e88-a91f-4b7f-a00a-67f82ab2aa2a" 
-    nombre2_NOalias = "vm3"
-    name_project = "prueba"
-    username = 'angelo123'
-    password = 'ah7Z6JQQ'  #pedir a usuario
-
-    # Obtener ID de la red que comparten ambas instancias
-    list_id_vm = [id1_vm_openst,id2_vm_openst]
-    answer = []
-    for id in list_id_vm:
-        nameNetworks = execCommand("openstack server show --format value -c addresses "+id+" | awk -F '=' '{print $1}'","10.20.10.221")
-        answer.append(nameNetworks)
-    commonNet = encontrar_nombre_mas_repetido(answer[0],answer[1])
-    network_string = execCommand("openstack network list --project "+name_project+" -c ID -c Name -f value","10.20.10.221")
-    lines = network_string.split('\n')
-    name_id_net_dic = {line.split()[1]: line.split()[0] for line in lines if line}
-    idNetwork = name_id_net_dic[commonNet]
-    # Obtener numero de puertos por la network
-    numPorts = execCommand("openstack port list --network "+idNetwork+" -c ID -f value | wc -l","10.20.10.221")
-    if (numPorts == "2"):
-        # Numero de puertos asociado a cada VM que pertenece a esa red en comun
-        numPorts_inst1 = execCommand("openstack port list --server "+id1_vm_openst+" -c ID -f value | wc -l","10.20.10.221")
-        numPorts_inst2 = execCommand("openstack port list --server "+id2_vm_openst+" -c ID -f value | wc -l","10.20.10.221")
-        if (numPorts_inst1 == "1" or numPorts_inst2 == "1"):
-            if (numPorts_inst1 != numPorts_inst2):
-                if "1" in numPorts_inst1:
-                    # Si instance1 tiene 1 port, elimino port de la otra instance
-                    id_port_elimnar_inst2 = execCommand("openstack port list --device-id "+id2_vm_openst+" --network "+idNetwork+" -c ID -f value","10.20.10.221")
-                    execCommand(f"nova interface-detach {id2_vm_openst} {id_port_elimnar_inst2}","10.20.10.221")
-                    execCommand("openstack port delete "+id_port_elimnar_inst2,"10.20.10.221")
-                else:
-                    # Si instance2 tiene 1 port, elimino port de la otra instance
-                    id_port_elimnar_inst1 = execCommand("openstack port list --device-id "+id1_vm_openst+" --network "+idNetwork+" -c ID -f value","10.20.10.221")
-                    execCommand(f"nova interface-detach {id1_vm_openst} {id_port_elimnar_inst1}","10.20.10.221")
-                    execCommand("openstack port delete "+id_port_elimnar_inst1,"10.20.10.221")
-            else:
-                # Crear una red, subnet, 1 puerto, asociarlo a una instance 1 (convencion)
-                token_for_project = generarToken(username,password,name_project)
-                
-                project_id = execCommand("openstack project show " + project_name + " | grep ' id ' | awk '{print $4}'","10.20.10.221")
-                numero = re.search(r'\d+', nombre1_NOalias)
-                numero = numero.group()
-                network_name = f"link{numero}X"
-
-                subnets_str = execCommand("openstack subnet list --project "+project_name+" -c Subnet --format value","10.20.10.221")
-                subnets = subnets_str.split('\n')
-                subnet_mas_alta = max(subnets, key=lambda x: int(x.split(".")[2]))
-                octetos = subnet_mas_alta.split(".")
-                tercer_digito = int(octetos[2]) + 1
-                octetos[2] = str(tercer_digito)
-                cidr = ".".join(octetos)
-                net_id = crearNetwork(token_for_project, network_name, network_name, '4', cidr)
-
-                port_name = nombre1_NOalias+"_"+network_name
-                port_id = crearPuertos(token_for_project,project_id,port_name,net_id)
-
-                # Identificar puerto que sera eliminado:
-                id_port_elimnar_inst1 = execCommand("openstack port list --device-id "+id1_vm_openst+" --network "+idNetwork+" -c ID -f value","10.20.10.221")
-
-                # Asociar nuevo puerto a instancia1
-                execCommand(f"nova interface-attach --port-id {port_id} {id1_vm_openst}","10.20.10.221")
-
-                # Eliminar puerto
-                execCommand(f"nova interface-detach {id1_vm_openst} {id_port_elimnar_inst1}","10.20.10.221")
-                execCommand("openstack port delete "+id_port_elimnar_inst1,"10.20.10.221")
-                
-        else:
-            # Lo que queda es desasociar ambos puertos, eliminarlos y luego a la red eliminarla
-            id_port_elimnar_inst2 = execCommand("openstack port list --device-id "+id2_vm_openst+" --network "+idNetwork+" -c ID -f value","10.20.10.221")
-            execCommand(f"nova interface-detach {id2_vm_openst} {id_port_elimnar_inst2}","10.20.10.221")
-            execCommand("openstack port delete "+id_port_elimnar_inst2,"10.20.10.221")
-            id_port_elimnar_inst1 = execCommand("openstack port list --device-id "+id1_vm_openst+" --network "+idNetwork+" -c ID -f value","10.20.10.221")
-            execCommand(f"nova interface-detach {id1_vm_openst} {id_port_elimnar_inst1}","10.20.10.221")
-            execCommand("openstack port delete "+id_port_elimnar_inst1,"10.20.10.221")
-            # Eliminar subnet de la red
-            id_subnet = execCommand("openstack subnet list --network "+idNetwork+" -f value -c ID","10.20.10.221")
-            execCommand("openstack subnet delete "+idNetwork,"10.20.10.221")
-            # Eliminar la red
-            execCommand("openstack network delete "+idNetwork,"10.20.10.221")
+    
 
 
     
