@@ -63,6 +63,7 @@ def crearUsuario(usuario, endpointBase):
     else:
         print(Fore.RED + "Error servidor, vuelva a intentar")
     # Generar contraseña aleatoria
+    caracteres = string.ascii_letters + string.digits
     punctuation_except_quotes = ''.join(c for c in string.punctuation if c not in ['"', "'"])
     caracteres = string.ascii_letters + string.digits + punctuation_except_quotes
     passwd = ''.join(random.choice(caracteres) for _ in range(8))
@@ -70,11 +71,13 @@ def crearUsuario(usuario, endpointBase):
     hash_sha512.update(passwd.encode("utf-8"))
     # Creando usuario
     respoCrear = requests.post(url = endpointBase+ "/usuario/crear", headers = {"Content-Type": "application/json"}, 
-                               data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"flagAZ":True,"Roles_idRoles":2}))
+                               data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"Roles_idRoles":2}))
     if(respoCrear.status_code == 200):
         print(Fore.GREEN+"Usuario creado exitosamente")
         crearUsuarioEnOpenStack(username, passwd)
-        send_email("[OLIMPUS] Credenciales de acceso - PUCP", email, username, passwd)
+        requests.post(url=endpointBase+"/send_mail", headers={"Content-Type":"application/json"}, 
+                      data=json.dumps({"title":"[OLIMPUS] Credenciales de acceso - PUCP", 
+                                       "email": email, "username": username, "password": passwd}))
         print(Fore.GREEN+"Correo enviado con credenciales")
         gestionarUsuarios(usuario, endpointBase)
     else:

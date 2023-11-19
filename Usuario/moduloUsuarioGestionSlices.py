@@ -16,78 +16,84 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                                 headers = {"Content-Type": "application/json"})
     if(response.status_code == 200):
         slices = response.json()['result']
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("N°",justify="center")
-        table.add_column("Nombre Slice",justify="center")
-        table.add_column("Fecha", justify="center")
-        table.add_column("Número Nodos", justify="center")
-        table.add_column("Número enlaces", justify="center")
-        index = 1
-        nombresSlices = []
-        for slice in slices:
-            nombreSlice = slice['nombre']
-            nombresSlices.append(nombreSlice)
-            fecha = slice['fecha']
-            numVMs = str(len(slice['sliceJSON']['vms']))
-            numLinks = str(len(slice['sliceJSON']['enlaces']))
-            table.add_row(str(index), nombreSlice, fecha, numVMs,numLinks)
-            index+=1
-        console.print(table)
-        opcionesGestion = ["a. Editar Slices","b. Eliminar Slices","Regresar"]
-        opcion = questionary.select("¿Desea editar o eliminar slices?", choices=opcionesGestion).ask()
-        if(opcion == "Regresar"):
-            return
+
+        if(len(slices) == 0):
+            print(Fore.YELLOW+"Usted aún no tiene slices creados")
         else:
-            if(opcion=="b. Eliminar Slices"):
-                nombreSlice = questionary.select("¿Cuál desea eliminar?", choices=nombresSlices).ask()
-                for slice in slices:
-                    nombre = slice['nombre']
-                    if nombre == nombreSlice:
-                        data = slice
-                        break
-                confirmation = questionary.confirm("¿Está seguro que desea eliminar este slice?\nEsta acción no es reversible").ask()
-                if(confirmation):
-                    response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice']), 
-                                        headers = {"Content-Type": "application/json"})
-                    if(response.status_code==200):
-                        respuesta = response.json()['result']
-                        if(respuesta == "Eliminado con éxito"):
-                            print(Fore.RED+"Slice eliminado")
-                else:
-                    return
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("N°",justify="center")
+            table.add_column("Nombre Slice",justify="center")
+            table.add_column("Fecha", justify="center")
+            table.add_column("Número Nodos", justify="center")
+            table.add_column("Número enlaces", justify="center")
+            table.add_column("Zona de disponibilidad", justify="center")
+            index = 1
+            nombresSlices = []
+            for slice in slices:
+                nombreSlice = slice['nombre']
+                nombresSlices.append(nombreSlice)
+                fecha = slice['fecha']
+                numVMs = str(len(slice['sliceJSON']['vms']))
+                numLinks = str(len(slice['sliceJSON']['enlaces']))
+                az = slice['sliceJSON']['AZ']
+                table.add_row(str(index), nombreSlice, fecha, numVMs,numLinks, az)
+                index+=1
+            console.print(table)
+            opcionesGestion = ["a. Editar Slices","b. Eliminar Slices","Regresar"]
+            opcion = questionary.select("¿Desea editar o eliminar slices?", choices=opcionesGestion).ask()
+            if(opcion == "Regresar"):
+                return
             else:
-                nombreSlice = questionary.select("¿Cuál desea editar?", choices=nombresSlices).ask()
-                for slice in slices:
-                    nombre = slice['nombre']
-                    if nombre == nombreSlice:
-                        data = slice
-                        break
-                slice_data = data['sliceJSON'] #Es un diccionario
-                slice_data_copia = copy.deepcopy(slice_data)
-                opcionesEditar = ["1. Eliminar VM","2. Eliminar Enlace","3. Agregar Enlace","4. Agregar VM","Regresar"]
-                opcion = questionary.select("¿Que acción realizará?", choices=opcionesEditar).ask()
-                if(opcion == "Regresar"):
-                    return
-                else:
-                    if(opcion=="1. Eliminar VM"):
-                        print(Fore.CYAN+"Cargando previsualización...")
-                        time.sleep(1)
-                        graficarTopologiaImportada(slice_data)
-                        eliminarVM(slice_data_copia)
-                    elif(opcion=="2. Eliminar Enlace"):
-                        print(Fore.CYAN+"Cargando previsualización...")
-                        time.sleep(1)
-                        graficarTopologiaImportada(slice_data)
-                        eliminarEnlace(slice_data_copia)
-                    elif(opcion=="3. Agregar Enlace"):
-                        print(Fore.CYAN+"Cargando previsualización...")
-                        time.sleep(1)
-                        graficarTopologiaImportada(slice_data)
-                        agregarEnlace(slice_data_copia)
-                    elif(opcion=="4. Agregar VM"):
-                        agregarVM(slice_data_copia, endpointBase)
+                if(opcion=="b. Eliminar Slices"):
+                    nombreSlice = questionary.select("¿Cuál desea eliminar?", choices=nombresSlices).ask()
+                    for slice in slices:
+                        nombre = slice['nombre']
+                        if nombre == nombreSlice:
+                            data = slice
+                            break
+                    confirmation = questionary.confirm("¿Está seguro que desea eliminar este slice?\nEsta acción no es reversible").ask()
+                    if(confirmation):
+                        response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice']), 
+                                            headers = {"Content-Type": "application/json"})
+                        if(response.status_code==200):
+                            respuesta = response.json()['result']
+                            if(respuesta == "Eliminado con éxito"):
+                                print(Fore.RED+"Slice eliminado")
                     else:
                         return
+                else:
+                    nombreSlice = questionary.select("¿Cuál desea editar?", choices=nombresSlices).ask()
+                    for slice in slices:
+                        nombre = slice['nombre']
+                        if nombre == nombreSlice:
+                            data = slice
+                            break
+                    slice_data = data['sliceJSON'] #Es un diccionario
+                    slice_data_copia = copy.deepcopy(slice_data)
+                    opcionesEditar = ["1. Eliminar VM","2. Eliminar Enlace","3. Agregar Enlace","4. Agregar VM","Regresar"]
+                    opcion = questionary.select("¿Que acción realizará?", choices=opcionesEditar).ask()
+                    if(opcion == "Regresar"):
+                        return
+                    else:
+                        if(opcion=="1. Eliminar VM"):
+                            print(Fore.CYAN+"Cargando previsualización...")
+                            time.sleep(1)
+                            graficarTopologiaImportada(slice_data)
+                            eliminarVM(slice_data_copia)
+                        elif(opcion=="2. Eliminar Enlace"):
+                            print(Fore.CYAN+"Cargando previsualización...")
+                            time.sleep(1)
+                            graficarTopologiaImportada(slice_data)
+                            eliminarEnlace(slice_data_copia)
+                        elif(opcion=="3. Agregar Enlace"):
+                            print(Fore.CYAN+"Cargando previsualización...")
+                            time.sleep(1)
+                            graficarTopologiaImportada(slice_data)
+                            agregarEnlace(slice_data_copia)
+                        elif(opcion=="4. Agregar VM"):
+                            agregarVM(slice_data_copia, endpointBase)
+                        else:
+                            return
     else:
         print(Fore.RED + "Error en el servidor")
     return

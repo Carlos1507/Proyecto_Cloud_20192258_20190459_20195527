@@ -7,13 +7,16 @@ from vmPlacement import crearSlice
 from vmPlacement import modificarSlice
 from modelosBD import *
 from modelosConsultas import *
+import funcionEnviarMail as send
 app = FastAPI()
 
 sistema = platform.system()
 if(sistema =="Linux"):
     from funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
+    from resourceManager import execLocal as execCommand
 else:
     from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
+    from resourceManager import execRemoto as execCommand
 
 disponible = True
 usuarioEnAtencion = 0
@@ -25,9 +28,7 @@ usuarioEnAtencion = 0
 ######################### GENERALES #############################
 @app.get("/", tags=["Conexión exitosa"])
 async def hello():
-    global slicesUsuarios
-    print(slicesUsuarios)
-    return {"result":"hello world from remote node"}
+    return {"result":"hello world from other node"}
 @app.get("/log", tags=["Log"])
 async def log():
     try:
@@ -63,7 +64,7 @@ async def usuarioCrear(user: Usuario):
     try:
         print(user.Roles_idRoles, "tipo: ",type(user.Roles_idRoles))
         ejecutarConsultaSQL("INSERT INTO usuario (username, passwd, email, Roles_idRoles) VALUES (%s, %s, %s, %s)",
-                            (user.username,user.passwd,user.email,0,user.Roles_idRoles))
+                            (user.username,user.passwd,user.email,user.Roles_idRoles))
         return {"result":"Correcto"}
     except Exception as e:
         print("Error: ", e)
@@ -162,7 +163,7 @@ async def recursosEliminar(idRecursos: int):
     except:
         return {"result":"Error"}
 
-########################### SLICES NUEVO #######################
+########################## SLICES #############################
 @app.get("/slice/listar", tags=["Slices"])
 async def sliceListar():
     result = ejecutarConsultaSQL("SELECT idSlice, nombre, idOpenstackproject, idLinuxProject, usuario_idUsuario, fecha, sliceJSON, username FROM slice INNER JOIN usuario ON slice.usuario_idUsuario = usuario.idUsuario", ())
@@ -190,6 +191,16 @@ async def sliceEliminar(idUser: int, idSlice:int):
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
+
+
+######################## ENVÍO CORREO ########################
+@app.post("/send_mail", tags=["Funciones especiales"])
+async def send_mail(email: Email):
+    try:
+        send.send_email(email.title, email.email, email.username, email.password)
+        return {"result":"Correcto"}
+    except Exception as e:
+        return {"result":f"Error {e}"}
 
 
 ########################### RESOURCE MANAGER & VM PLACEMENT ###############################

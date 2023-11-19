@@ -36,6 +36,8 @@ def importarTopologia(usuarioLog, endpointBase):
             confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
             if(confirmationCrear):
                 validarSliceCrearRecursos(usuarioLog, endpointBase, jsonfile)
+            else:
+                crearSlice(usuarioLog, endpointBase)
     except FileNotFoundError:
         print(Fore.RED+"El archivo no se encontró")
     except IOError:
@@ -112,9 +114,15 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         fecha_actual = datetime.datetime.now()
         while not (nombre := questionary.text("Ingrese un nombre para su slice").ask().strip()):
             print(Fore.YELLOW + "Su slice debe tener un nombre")
-        slice = {"vms": VMsDetalladas, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
+        
         confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
         if(confirmationCrear):
+            opcionesAZ = ["1. Openstack - Golden Zone", "2. Linux - Silver Zone"]
+            plataformaElegida = questionary.select("Seleccione una zona de disponibilidad: ", choices=opcionesAZ).ask()
+            if(plataformaElegida == opcionesAZ[0]):
+                slice = {"vms": VMsDetalladas, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y"), "AZ": "Golden Zone"}  
+            else:
+                slice = {"vms": VMsDetalladas, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y"), "AZ": "Silver Zone"}  
             validarSliceCrearRecursos(usuarioLog, endpointBase, slice)
         else:
             crearSlice(usuarioLog, endpointBase)
@@ -200,9 +208,15 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
     fecha_actual = datetime.datetime.now()
     while not (nombre := questionary.text("Ingrese un nombre para su slice").ask().strip()):
         print(Fore.YELLOW + "Su slice debe tener un nombre")
-    slice = {"vms": listaVMs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y")}  
+
     confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
     if(confirmationCrear):
+        opcionesAZ = ["1. Openstack - Golden Zone", "2. Linux - Silver Zone"]
+        plataformaElegida = questionary.select("Seleccione una zona de disponibilidad: ", choices=opcionesAZ).ask()
+        if(plataformaElegida == opcionesAZ[0]):
+            slice = {"vms": listaVMs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y"), "AZ": "Golden Zone"}  
+        else:
+            slice = {"vms": listaVMs, "enlaces":listaEnlaces, "nombre":nombre, "fecha":fecha_actual.strftime("%d/%m/%Y"), "AZ": "Silver Zone"}  
         validarSliceCrearRecursos(usuarioLog, endpointBase, slice)
     else:
         crearSlice(usuarioLog, endpointBase)
