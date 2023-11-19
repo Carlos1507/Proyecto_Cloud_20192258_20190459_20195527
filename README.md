@@ -7,3 +7,8 @@ Se desarrolla bajo el modelo de un controlador central (Headnode) y un cluster d
 ### Dependencias necesarias:
 Los requerimientos en dependencias y versiones de python para este proyecto se encuentran en el archivo a continuación, asimismo, se sugiere instalarlas en un entorno virtual.
 [Requerimientos](requirements.txt)
+## Estructura del proyecto e instalación
+El proyecto consta de dos partes, cliente y servidor, ambos en python 3.
+Asimismo, en cuanto a equipos de cómputo, tenemos: computadora local, controlador (Headnode), gateway y cluster de servidores (Worker 1, 2 y 3)
+1. En el headnode y workers se instala Openstack y se configuran e instalan las herramientas de **Chrony**, **MariaDB**, **RabbitMQ**, **Memcached**, **Etcd**; y los servicios de **Openstack**: *Keystone*,  *Glance*, *Placement*, *Nova*, *Neutron*, *Horizon*
+2. Dar salida a los servicios de openstack con iptables: `a`
