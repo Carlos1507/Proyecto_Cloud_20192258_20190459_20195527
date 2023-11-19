@@ -11,4 +11,5 @@ Los requerimientos en dependencias y versiones de python para este proyecto se e
 El proyecto consta de dos partes, cliente y servidor, ambos en python 3.
 Asimismo, en cuanto a equipos de cómputo, tenemos: computadora local, controlador (Headnode), gateway y cluster de servidores (Worker 1, 2 y 3)
 1. En el headnode y workers se instala Openstack y se configuran e instalan las herramientas de **Chrony**, **MariaDB**, **RabbitMQ**, **Memcached**, **Etcd**; y los servicios de **Openstack**: *Keystone*,  *Glance*, *Placement*, *Nova*, *Neutron*, *Horizon*
-2. Dar salida a los servicios de openstack con iptables: `a`
+2. Dar salida a los servicios de openstack con iptables en el gateway: `iptables -t nat -A PREROUTING -p tcp -m tcp --dport XXXX -j DNAT --to-destination 10.0.10.2:XXXX`, donde *XXXX* es el puerto al que se le desea dar salida
+3. Dado que el servidor se usará en el puerto 8000, dar salida también a este puerto en el gateway: `iptables -t nat -A PREROUTING -p tcp -m tcp --dport 8000 -j DNAT --to-destination 10.0.10.2:8000`
