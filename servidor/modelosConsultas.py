@@ -26,6 +26,11 @@ class Recursos(BaseModel):
 class UserValidation(BaseModel):
     username: str
     password: str
+class Email(BaseModel):
+    title: str
+    email: str
+    username: str
+    password: str
 class Imagen(BaseModel):
     nombre: str
     filename: Optional[str] = None

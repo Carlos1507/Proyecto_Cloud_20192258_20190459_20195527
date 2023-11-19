@@ -1,4 +1,6 @@
 import random, os, paramiko, json
+import json, os, platform
+sistema = platform.system()
 
 def validarRecursosDisponibles(data):
     suma_ram = 0
@@ -11,9 +13,16 @@ def validarRecursosDisponibles(data):
     print("Suma de RAM:", suma_ram)
     print("Suma de CPUs:", suma_cpu)
     print("Suma de Disk:", suma_disk)
-    resultW1 = execRemoto("openstack hypervisor show Worker1 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","10.20.10.221")
-    resultW2 = execRemoto("openstack hypervisor show Worker2 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","10.20.10.221")
-    resultW3 = execRemoto("openstack hypervisor show Worker3 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","10.20.10.221")
+
+    if(sistema=="Linux"):
+         resultW1 = execLocal("openstack hypervisor show Worker1 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb -c memory_mb_used --format json","127.0.0.1")
+         resultW2 = execLocal("openstack hypervisor show Worker2 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","127.0.0.1")    
+         resultW3 = execLocal("openstack hypervisor show Worker3 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","127.0.0.1")
+    else:
+         resultW1 = execLocal("openstack hypervisor show Worker1 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","10.20.10.221")
+         resultW2 = execLocal("openstack hypervisor show Worker2 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","10.20.10.221")
+         resultW3 = execLocal("openstack hypervisor show Worker3 -c vcpus -c vcpus_used -c local_gb -c local_gb_used -c memory_mb -c memory_mb_used --format json","10.20.10.221")
+
     recursosW1= json.loads(resultW1)
     recursosW2= json.loads(resultW2)
     recursosW3= json.loads(resultW3)
