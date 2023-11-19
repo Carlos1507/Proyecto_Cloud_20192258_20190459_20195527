@@ -128,7 +128,6 @@ def borrarSlice(project_name):
 
 def crearSlice(datos,username,password,project_name):
     ip_version = '4'
-    numEnlaces = len(datos["enlaces"])
     base_cidr = '10.0.'
     cidr_suffix = '/24'
     nombresEnlaces = obtenerNombresEnlaces(datos)
@@ -184,19 +183,62 @@ if __name__ == "__main__":
     # JSON de una topología lineal
     datos = {
         "vms": [
-            {"nombre": "vm1", "alias": "compute1", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
-            {"nombre": "vm2", "alias": "SwitchOVS", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
-            {"nombre": "vm3", "alias": "compute2", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"}
+            {"nombre": "vm1", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
+            {"nombre": "vm2", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"},
+            {"nombre": "vm3", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"}, 
+            {"nombre": "vm4", "alias": "", "ram": 100, "cpu": 1.0, "disk": 1, "imagen": "cirros-0.6.2-x86_64-disk.img", "idOpenstackImagen": "474e67b0-5022-43e7-9312-51085691a37e", "idOpenstackFlavor": "766fa567-86c4-42b4-a3a1-f2316cdb0b7d"}
         ],
-        "enlaces": [["vm2", "vm1"],["vm3", "vm2"]],
+        "enlaces": [('vm2', 'vm1'), ('vm3', 'vm2'), ('vm4', 'vm3')],
         "nombre": "lineal3",
-        "fecha": "17/11/2023"
+        "fecha": "18/11/2023",
+        'AZ': 'Golden Zone'
     }
 
     # Datos previos
     username = 'angelo123'
-    password = 'b7[(]FeK'  #pedir a usuario
+    password = 'ah7Z6JQQ'  #pedir a usuario
     project_name = 'prueba'  #pedir a usuario
 
-    crearSlice(datos,username,password,project_name)
+    #crearSlice(datos,username,password,project_name)
     #borrarSlice(project_name)
+
+
+    ## Editar: Eliminar una VM
+    id_Vm_OpenStack = "01999471-5788-4f74-9c43-3b6437cfde08"
+    name_project = "prueba"
+    numPorts = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | wc -l","10.20.10.221")
+    if (numPorts == "1"):
+        # Obtener ID de la red a la que pertenece la VM (solo un puerto, pertenece solo a una red)
+        nameNetwork = execCommand("openstack server show --format value -c addresses "+id_Vm_OpenStack+" | awk -F '=' '{print $1}'","10.20.10.221")
+        network_string = execCommand("openstack network list --project "+name_project+" -c ID -c Name -f value","10.20.10.221")
+        lines = network_string.split('\n')
+        name_id_net_dic = {line.split()[1]: line.split()[0] for line in lines if line}
+        idNetwork = name_id_net_dic[nameNetwork]
+        # Obtener ID del puerto asociado a la VM (sería solo 1)
+        ipPortAsociadoVMeliminar = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | awk '{print $1}'","10.20.10.221")
+        # Borras VM con ID de la VM
+        execCommand("openstack server delete "+id_Vm_OpenStack,"10.20.10.221")
+        # Borrar puerto antes asociado a la VM eliminada
+        execCommand("openstack port delete "+ipPortAsociadoVMeliminar,"10.20.10.221")
+        # Obtener ID del puerto restante mediante ID de red
+        idPuertoRestante = execCommand("openstack port list --network "+idNetwork+" -c ID -f value","10.20.10.221")
+        # Ver a que VM esta asociado ese puerto restante, obtener ID VM
+        idVMdePuertoRestante = execCommand("openstack port show "+idPuertoRestante+" -c device_id -f value","10.20.10.221")
+        # Desasociar el puerto de la VM
+        execCommand(f"nova interface-detach {idVMdePuertoRestante} {idPuertoRestante}","10.20.10.221")
+        # Eliminar el puerto de la VM con el ID
+        execCommand("openstack port delete "+idPuertoRestante,"10.20.10.221")
+        # Eliminar subnet de la red
+        id_subnet = execCommand("openstack subnet list --network "+idNetwork+" -f value -c ID","10.20.10.221")
+        execCommand("openstack subnet delete "+id_subnet,"10.20.10.221")
+        # Eliminar la red
+        execCommand("openstack network delete "+idNetwork,"10.20.10.221")
+    else:
+        # Obtener los ID de esos puertos asociados a la VM
+        network_string = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value","10.20.10.221")
+        listaPuertos = network_string.split('\n')
+        # Borras VM con ID de la VM
+        execCommand("openstack server delete "+id_Vm_OpenStack,"10.20.10.221")
+        # Con el numero de puertos asociados, un bucle for y elimnar puertos
+        for portID in listaPuertos:
+            execCommand("openstack port delete "+portID,"10.20.10.221")
