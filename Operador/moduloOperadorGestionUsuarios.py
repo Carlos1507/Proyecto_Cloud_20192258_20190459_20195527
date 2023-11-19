@@ -63,7 +63,12 @@ def crearUsuario(usuario, endpointBase):
     else:
         print(Fore.RED + "Error servidor, vuelva a intentar")
     # Generar contraseña aleatoria
+<<<<<<< HEAD
     caracteres = string.ascii_letters + string.digits
+=======
+    punctuation_except_quotes = ''.join(c for c in string.punctuation if c not in ['"', "'"])
+    caracteres = string.ascii_letters + string.digits + punctuation_except_quotes
+>>>>>>> 5d66607022dd4214d48385936c69dd17bfa60d3f
     passwd = ''.join(random.choice(caracteres) for _ in range(8))
     hash_sha512 = hashlib.sha512()
     hash_sha512.update(passwd.encode("utf-8"))
@@ -132,5 +137,5 @@ def listarAllUsers(usuario, endpointBase):
 
 
 def crearUsuarioEnOpenStack(username, passwd):
-    comando = f"openstack user create --domain default --password {passwd} {username}"
+    comando = f"openstack user create --domain default --password '{passwd}' '{username}'"
     funcionEjecutarComandoRemoto.execRemoto(comando,"10.20.10.221")
