@@ -4,3 +4,6 @@ Este proyecto se desarrolla como un prototipo de una capa superior de personaliz
 Se desarrolla bajo el modelo de un controlador central (Headnode) y un cluster de servidores (Workers), los cuales poseen el la distribución Ubuntu de Linux. Asimismo, esta implementación, en este nivel de versión se implementa en CLI mediante el lenguaje de programación Python en su versión 3, y se integra a Openstack Victoria mediante consultas APIs, y una base de datos MySQL.
 ### La arquitectura es la siguiente:
 ![Arquitectura de la aplicación](arquitectura.png)
+### Dependencias necesarias:
+Los requerimientos en dependencias y versiones de python para este proyecto se encuentran en el archivo a continuación, asimismo, se sugiere instalarlas en un entorno virtual.
+[Requerimientos](requirements.txt)
