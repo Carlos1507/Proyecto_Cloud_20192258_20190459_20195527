@@ -242,3 +242,4 @@ if __name__ == "__main__":
         # Con el numero de puertos asociados, un bucle for y elimnar puertos
         for portID in listaPuertos:
             execCommand("openstack port delete "+portID,"10.20.10.221")
+        print("hello")
