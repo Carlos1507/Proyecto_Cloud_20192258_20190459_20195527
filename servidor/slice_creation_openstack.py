@@ -6,6 +6,7 @@ from openstack_sdk import create_subnet
 from openstack_sdk import create_port
 from openstack_sdk import create_instance
 import json, os, platform
+import re
 sistema = platform.system()
 
 if(sistema =="Linux"):
@@ -178,6 +179,81 @@ def crearSlice(datos,username,password,project_name):
             enlace[key] = value.replace('controller', '10.20.10.221')
     print(instance_link_list)
 
+def edit_EliminarInstancia(id_Vm_OpenStack,name_project):
+    numPorts = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | wc -l","10.20.10.221")
+    if (numPorts == "1"):
+        # Obtener ID de la red a la que pertenece la VM (solo un puerto, pertenece solo a una red)
+        nameNetwork = execCommand("openstack server show --format value -c addresses "+id_Vm_OpenStack+" | awk -F '=' '{print $1}'","10.20.10.221")
+        network_string = execCommand("openstack network list --project "+name_project+" -c ID -c Name -f value","10.20.10.221")
+        lines = network_string.split('\n')
+        name_id_net_dic = {line.split()[1]: line.split()[0] for line in lines if line}
+        idNetwork = name_id_net_dic[nameNetwork]
+        # Obtener ID del puerto asociado a la VM (sería solo 1)
+        ipPortAsociadoVMeliminar = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | awk '{print $1}'","10.20.10.221")
+        # Borras VM con ID de la VM
+        execCommand("openstack server delete "+id_Vm_OpenStack,"10.20.10.221")
+        # Borrar puerto antes asociado a la VM eliminada
+        execCommand("openstack port delete "+ipPortAsociadoVMeliminar,"10.20.10.221")
+
+        # Obtener ID del puerto restante mediante ID de red
+        idPuertoRestante = execCommand("openstack port list --network "+idNetwork+" -c ID -f value","10.20.10.221")
+        if(idPuertoRestante is not None and idPuertoRestante != ""):
+            # Ver a que VM esta asociado ese puerto restante, obtener ID VM
+            idVMdePuertoRestante = execCommand("openstack port show "+idPuertoRestante+" -c device_id -f value","10.20.10.221")
+            # Desasociar el puerto de la VM
+            execCommand(f"nova interface-detach {idVMdePuertoRestante} {idPuertoRestante}","10.20.10.221")
+            # Eliminar el puerto de la VM con el ID
+            execCommand("openstack port delete "+idPuertoRestante,"10.20.10.221")
+
+        # Eliminar subnet de la red
+        id_subnet = execCommand("openstack subnet list --network "+idNetwork+" -f value -c ID","10.20.10.221")
+        execCommand("openstack subnet delete "+id_subnet,"10.20.10.221")
+        # Eliminar la red
+        execCommand("openstack network delete "+idNetwork,"10.20.10.221")
+    else:
+        # Obtener los ID de esos puertos asociados a la VM
+        network_string = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value","10.20.10.221")
+        listaPuertos = network_string.split('\n')
+        # Obtener nombres de las redes en contacto con la VM a eliminar
+        name_IP_nets = execCommand("openstack server show "+id_Vm_OpenStack+" -c addresses -f value","10.20.10.221")
+        name_ip_nets_list = re.findall(r'(\w+)=', name_IP_nets)
+
+        network_string = execCommand("openstack network list --project "+name_project+" -c ID -c Name -f value","10.20.10.221")
+        lines = network_string.split('\n')
+        name_id_net_dic = {line.split()[1]: line.split()[0] for line in lines if line}
+        redesContacto = {clave: name_id_net_dic[clave] for clave in name_ip_nets_list}
+        
+        # Borras VM con ID de la VM
+        execCommand("openstack server delete "+id_Vm_OpenStack,"10.20.10.221")
+        # Con el numero de puertos asociados, un bucle for y elimnar puertos
+        for portID in listaPuertos:
+            execCommand("openstack port delete "+portID,"10.20.10.221")
+
+        # Eliminando redes no servibles
+        redesContacto = {'link21': 'e11f308f-30c1-4318-89f9-2fc412c12985', 'link32': '856b9912-8a8f-4114-8c84-6c5ff81589a0'}
+        for clave, valor in redesContacto.items():
+            vmContacto = execCommand("openstack port list --network "+valor+" -c ID -c Device -f value | grep -c '^'","10.20.10.221")
+            # Cuantas instancias hay por red
+            if (vmContacto == '1'):
+                puerto = execCommand("openstack port list --network "+valor+" -c ID -c Device --format value","10.20.10.221")
+                instancia = execCommand("openstack port show "+puerto+" -c device_id -f value","10.20.10.221")
+                numPortsVm = execCommand("openstack port list --server "+instancia+" -c ID -f value | wc -l","10.20.10.221")
+                if (numPortsVm != '1'):
+                    # Obtener ID del puerto restante mediante ID de red
+                    idPuertoRestante = execCommand("openstack port list --network "+valor+" -c ID -f value","10.20.10.221")
+                    # Ver a que VM esta asociado ese puerto restante, obtener ID VM
+                    idVMdePuertoRestante = execCommand("openstack port show "+idPuertoRestante+" -c device_id -f value","10.20.10.221")
+                    # Desasociar el puerto de la VM
+                    execCommand(f"nova interface-detach {idVMdePuertoRestante} {idPuertoRestante}","10.20.10.221")
+                    # Eliminar el puerto de la VM con el ID
+                    execCommand("openstack port delete "+idPuertoRestante,"10.20.10.221")
+                    # Eliminar subnet de la red
+                    id_subnet = execCommand("openstack subnet list --network "+valor+" -f value -c ID","10.20.10.221")
+                    execCommand("openstack subnet delete "+id_subnet,"10.20.10.221")
+                    # Eliminar la red
+                    execCommand("openstack network delete "+valor,"10.20.10.221")
+
+
 if __name__ == "__main__":
 
     # JSON de una topología lineal
@@ -204,42 +280,9 @@ if __name__ == "__main__":
 
 
     ## Editar: Eliminar una VM
-    id_Vm_OpenStack = "01999471-5788-4f74-9c43-3b6437cfde08"
+    id_Vm_OpenStack = "334eb831-771b-471f-9846-74c232c19000"
     name_project = "prueba"
-    numPorts = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | wc -l","10.20.10.221")
-    if (numPorts == "1"):
-        # Obtener ID de la red a la que pertenece la VM (solo un puerto, pertenece solo a una red)
-        nameNetwork = execCommand("openstack server show --format value -c addresses "+id_Vm_OpenStack+" | awk -F '=' '{print $1}'","10.20.10.221")
-        network_string = execCommand("openstack network list --project "+name_project+" -c ID -c Name -f value","10.20.10.221")
-        lines = network_string.split('\n')
-        name_id_net_dic = {line.split()[1]: line.split()[0] for line in lines if line}
-        idNetwork = name_id_net_dic[nameNetwork]
-        # Obtener ID del puerto asociado a la VM (sería solo 1)
-        ipPortAsociadoVMeliminar = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value | awk '{print $1}'","10.20.10.221")
-        # Borras VM con ID de la VM
-        execCommand("openstack server delete "+id_Vm_OpenStack,"10.20.10.221")
-        # Borrar puerto antes asociado a la VM eliminada
-        execCommand("openstack port delete "+ipPortAsociadoVMeliminar,"10.20.10.221")
-        # Obtener ID del puerto restante mediante ID de red
-        idPuertoRestante = execCommand("openstack port list --network "+idNetwork+" -c ID -f value","10.20.10.221")
-        # Ver a que VM esta asociado ese puerto restante, obtener ID VM
-        idVMdePuertoRestante = execCommand("openstack port show "+idPuertoRestante+" -c device_id -f value","10.20.10.221")
-        # Desasociar el puerto de la VM
-        execCommand(f"nova interface-detach {idVMdePuertoRestante} {idPuertoRestante}","10.20.10.221")
-        # Eliminar el puerto de la VM con el ID
-        execCommand("openstack port delete "+idPuertoRestante,"10.20.10.221")
-        # Eliminar subnet de la red
-        id_subnet = execCommand("openstack subnet list --network "+idNetwork+" -f value -c ID","10.20.10.221")
-        execCommand("openstack subnet delete "+id_subnet,"10.20.10.221")
-        # Eliminar la red
-        execCommand("openstack network delete "+idNetwork,"10.20.10.221")
-    else:
-        # Obtener los ID de esos puertos asociados a la VM
-        network_string = execCommand("openstack port list --server "+id_Vm_OpenStack+" -c ID -f value","10.20.10.221")
-        listaPuertos = network_string.split('\n')
-        # Borras VM con ID de la VM
-        execCommand("openstack server delete "+id_Vm_OpenStack,"10.20.10.221")
-        # Con el numero de puertos asociados, un bucle for y elimnar puertos
-        for portID in listaPuertos:
-            execCommand("openstack port delete "+portID,"10.20.10.221")
-        print("hello")
+    edit_EliminarInstancia(id_Vm_OpenStack,name_project)
+    
+
+
