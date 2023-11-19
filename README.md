@@ -43,4 +43,4 @@ source env-cloud/bin/activate
 9. Dentro del entorno virtual, instalar las dependencias requeridas:
 `pip install -r requirements.txt`
 10. Luego de copiar la carpeta del servidor, correr el servidor con:
-nohup python servidorPy.py > salida.log 2>&1 &
+`nohup python servidorPy.py > salida.log 2>&1 &`
