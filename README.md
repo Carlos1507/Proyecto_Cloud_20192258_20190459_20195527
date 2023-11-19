@@ -32,7 +32,9 @@ sudo apt update
 sudo apt install docker-ce docker-ce-cli containerd.io
 ```
 6. Creación del docker de MySQL:
-`docker run -d -p 4000:3306 --name mysql-cloud -e MYSQL_ROOT_PASSWORD=cloud2023 mysql:8.0`
+```
+docker run -d -p 4000:3306 --name mysql-cloud -e MYSQL_ROOT_PASSWORD=cloud2023 mysql:8.0
+```
 7. Instalación y creación del entorno virtual en python
 ```
 sudo apt install python3.8-venv
