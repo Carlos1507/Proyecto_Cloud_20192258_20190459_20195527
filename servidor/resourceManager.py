@@ -103,13 +103,11 @@ def execLocal(command, host):
         client.close()
 
 def crearVM_BD(vm):
-    if vm['alias'] != "":
-        nombreVM = vm['alias']
-    else:
-        nombreVM = vm['nombre']
     try:
-        ejecutarConsultaSQL("INSERT INTO vm (nombre, idopenstack, pid, flavors_idflavors, imagenes_idImagenes, slice_idSlice, linkAcceso) VALUES (%s, %s, %s, %s, %s, %s)",
-                            (nombreVM, vm['idVM'], "0", vm['idOpenstackFlavor'], vm['idOpenstackImagen'], int(vm['idSliceBD']), vm['linkAcceso']))
+        idFlavor = ejecutarConsultaSQL("SELECT idflavors from flavors where idflavorglance = %s",(vm['idOpenstackFlavor'],))[0]
+        idImagen = ejecutarConsultaSQL("SELECT idImagenes from imagenes where idglance = %s", (vm['idOpenstackImagen'],))[0]
+        ejecutarConsultaSQL("INSERT INTO vm (nombre, idopenstack, pid, flavors_idflavors, imagenes_idImagenes, slice_idSlice, linkAcceso, alias) VALUES (%s, %s, %s, %s, %s, %s, %s,%s)",
+                            (vm['nombre'], vm['idVM'], "0",idFlavor[0], idImagen[0], int(vm['idSliceBD']), vm['linkAcceso'], vm['alias']))
         return "Exito" 
     except Exception as e:
         return e

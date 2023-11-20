@@ -188,7 +188,10 @@ async def sliceListarPorUsuario(idUser: int):
 @app.delete("/slice/eliminar/{idUser}/{idSlice}/{nombre}", tags=["Slices"])
 async def sliceEliminar(idUser: int, idSlice:int, nombre:str):
     try:
-        openstackFeatures.borrarSlice(nombre)
+        openstackFeatures.borrarSlice(nombre)        
+        idVMsBD = ejecutarConsultaSQL("SELECT idvm from vm where slice_idSlice = %s",(idSlice,))
+        for vm in idVMsBD:
+            ejecutarConsultaSQL("DELETE FROM vm WHERE idvm= %s", (vm,))
         ejecutarConsultaSQL("DELETE FROM slice WHERE (idSlice= %s and usuario_idUsuario = %s)", (idSlice,idUser))
         actualizarRecursosDisponibles()
         return {"result":"Correcto"}
@@ -220,7 +223,6 @@ async def disponibleValidar(idUser: int):
         return {"result":"Ocupado"}
 @app.post("/validacionRecursos/{idUser}/{username}/{passwd}/{project_name}", tags=["RM & VM"])
 async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, project_name: str,request: Request):
-    print(idUser, username,passwd,project_name)
     global usuarioEnAtencion, disponible
     if(usuarioEnAtencion == idUser):
         data = await request.json()
@@ -243,7 +245,7 @@ async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, 
                 combinarInfoVMs = combinarInfo(result, data, idSliceBD)
                 print("Info combinada", combinarInfoVMs)
                 for vm in combinarInfoVMs:
-                    print("vm", vm)
+                    print("Creando...", vm['nombre'])
                     crearVM_BD(vm) ## YA IMPLEMENTADO
                 print("Actualizar recursos")
                 actualizarRecursosDisponibles() ## YA IMPLEMENTADO
@@ -255,6 +257,13 @@ async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, 
     else:
         return {"result":"El servidor está atentiendo a otro usuario, espere su turno"}
     
+
+@app.post("/prueba/crearVM")
+async def crearVM(request: Request):
+    data = await request.json()
+    crearVM_BD(data)
+    return {"result": "exito"}
+
 
 def combinarInfo(result, data, idSliceBD):
     lista_final = []
