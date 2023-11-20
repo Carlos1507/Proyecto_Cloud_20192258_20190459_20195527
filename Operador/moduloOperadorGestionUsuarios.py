@@ -64,7 +64,7 @@ def crearUsuario(usuario, endpointBase):
         print(Fore.RED + "Error servidor, vuelva a intentar")
     # Generar contraseña aleatoria
     caracteres = string.ascii_letters + string.digits
-    punctuation_except_quotes = ''.join(c for c in string.punctuation if c not in ['"', "'"])
+    punctuation_except_quotes = ''.join(c for c in string.punctuation if c not in ['"', "'",'?','/','.',','])
     caracteres = string.ascii_letters + string.digits + punctuation_except_quotes
     passwd = ''.join(random.choice(caracteres) for _ in range(8))
     hash_sha512 = hashlib.sha512()

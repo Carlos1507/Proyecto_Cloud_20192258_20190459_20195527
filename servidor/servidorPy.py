@@ -75,6 +75,8 @@ async def usuarioCrear(user: Usuario):
 @app.delete("/usuario/eliminar/{idUser}", tags=["Usuario"])
 async def usuarioEliminar(idUser: int):
     try:
+        username = ejecutarConsultaSQL("SELECT username FROM usuario where idUsuario = %s", (idUser,))[0]
+        execCommand("openstack user delete "+username, "10.20.10.221")
         ejecutarConsultaSQL("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
         return {"result":"Correcto"}
     except:
@@ -188,6 +190,7 @@ async def sliceEliminar(idUser: int, idSlice:int, nombre:str):
     try:
         openstackFeatures.borrarSlice(nombre)
         ejecutarConsultaSQL("DELETE FROM slice WHERE (idSlice= %s and usuario_idUsuario = %s)", (idSlice,idUser))
+        actualizarRecursosDisponibles()
         return {"result":"Correcto"}
     except:
         return {"result":"Error"}
@@ -217,6 +220,7 @@ async def disponibleValidar(idUser: int):
         return {"result":"Ocupado"}
 @app.post("/validacionRecursos/{idUser}/{username}/{passwd}/{project_name}", tags=["RM & VM"])
 async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, project_name: str,request: Request):
+    print(idUser, username,passwd,project_name)
     global usuarioEnAtencion, disponible
     if(usuarioEnAtencion == idUser):
         data = await request.json()
@@ -229,14 +233,21 @@ async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, 
             else:
                 # Crear en Linux
                 result = linuxFeatures(data)  ## FALTA IMPLEMENTAR
+            print("resultCREACIÓN", result)
             if(result != None):
                 idOpenstack = obtenerIDOpenstackProject(project_name) ## YA IMPLEMENTADO
-                idSliceBD = crearSliceBD(data, idUser, idOpenstack)   ## YA IMPLEMENTADO
+                print("idOpenstack", idOpenstack)
+                idSliceBD = crearSliceBD(data, idUser, idOpenstack)[0]   ## YA IMPLEMENTADO
+                print("idSliceBD", idSliceBD)
                 disponible = True
                 combinarInfoVMs = combinarInfo(result, data, idSliceBD)
+                print("Info combinada", combinarInfoVMs)
                 for vm in combinarInfoVMs:
+                    print("vm", vm)
                     crearVM_BD(vm) ## YA IMPLEMENTADO
+                print("Actualizar recursos")
                 actualizarRecursosDisponibles() ## YA IMPLEMENTADO
+                print("Recursos actualizados")
                 return {"result": "Slice creado exitosamente"}
         else:
             return {"result": "En este momentoNo se cuentan con los suficientes \

@@ -109,8 +109,8 @@ def crearVM_BD(vm):
         nombreVM = vm['nombre']
     try:
         ejecutarConsultaSQL("INSERT INTO vm (nombre, idopenstack, pid, flavors_idflavors, imagenes_idImagenes, slice_idSlice, linkAcceso) VALUES (%s, %s, %s, %s, %s, %s)",
-                            (nombreVM, vm['idVM'], 0, vm['idOpenstackFlavor'], vm['idOpenstackImagen'], vm['idSliceBD'], vm['linkAcceso']))
-        return "Exito"    
+                            (nombreVM, vm['idVM'], "0", vm['idOpenstackFlavor'], vm['idOpenstackImagen'], int(vm['idSliceBD']), vm['linkAcceso']))
+        return "Exito" 
     except Exception as e:
         return e
 
@@ -120,20 +120,20 @@ def actualizarRecursosDisponibles():
          resultW2 = execLocal("openstack hypervisor show Worker2 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","127.0.0.1")    
          resultW3 = execLocal("openstack hypervisor show Worker3 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","127.0.0.1")
     else:
-         resultW1 = execLocal("openstack hypervisor show Worker1 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","10.20.10.221")
-         resultW2 = execLocal("openstack hypervisor show Worker2 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","10.20.10.221")
-         resultW3 = execLocal("openstack hypervisor show Worker3 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","10.20.10.221")
+         resultW1 = execRemoto("openstack hypervisor show Worker1 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","10.20.10.221")
+         resultW2 = execRemoto("openstack hypervisor show Worker2 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","10.20.10.221")
+         resultW3 = execRemoto("openstack hypervisor show Worker3 -c vcpus_used -c local_gb_used -c memory_mb_used --format json","10.20.10.221")
 
     recursosW1= json.loads(resultW1)
     recursosW2= json.loads(resultW2)
     recursosW3= json.loads(resultW3)
     
     ejecutarConsultaSQL("UPDATE recursos SET memoriaUso = %s, discoAsignado = %s, cpusAsignado = %s WHERE worker=%s",
-                        (int(recursosW1['memory_mb_used']),int(recursosW1['local_gb_used'], int(recursosW1['vcpus_used']), "worker1")))
+                        (int(recursosW1['memory_mb_used']),int(recursosW1['local_gb_used']), int(recursosW1['vcpus_used']), "worker1"))
     ejecutarConsultaSQL("UPDATE recursos SET memoriaUso = %s, discoAsignado = %s, cpusAsignado = %s WHERE worker=%s",
-                        (int(recursosW2['memory_mb_used']),int(recursosW2['local_gb_used'], int(recursosW2['vcpus_used']), "worker1")))
+                        (int(recursosW2['memory_mb_used']),int(recursosW2['local_gb_used']), int(recursosW2['vcpus_used']), "worker2"))
     ejecutarConsultaSQL("UPDATE recursos SET memoriaUso = %s, discoAsignado = %s, cpusAsignado = %s WHERE worker=%s",
-                        (int(recursosW3['memory_mb_used']),int(recursosW3['local_gb_used'], int(recursosW3['vcpus_used']), "worker1")))
+                        (int(recursosW3['memory_mb_used']),int(recursosW3['local_gb_used']), int(recursosW3['vcpus_used']), "worker3"))
 
 if __name__ == "__main__":
     resultado = execRemoto("openstack hypervisor list", "10.20.10.221")

@@ -152,8 +152,8 @@ def validarDisponibilidadServidor(usuarioLog, endpointBase):
             return False
 
 def crearRecursos(usuarioLog, endpointBase, data):
-    print(data)
-    response = requests.post(url = endpointBase+"/validacionRecursos/"+str(usuarioLog.idUser), 
+    passwd = questionary.password("Digite su contraseña para confirmar creación: ").ask()
+    response = requests.post(url = endpointBase+"/validacionRecursos/"+str(usuarioLog.idUser)+"/"+usuarioLog.username+"/"+passwd+"/"+data['nombre'], 
                                 headers = {"Content-Type": "application/json"}, data=json.dumps(data))
     if(response.status_code == 200):
         result = response.json()['result']
