@@ -53,7 +53,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                             break
                     confirmation = questionary.confirm("¿Está seguro que desea eliminar este slice?\nEsta acción no es reversible").ask()
                     if(confirmation):
-                        response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice']), 
+                        response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice'])+"/"+str(data['nombre']), 
                                             headers = {"Content-Type": "application/json"})
                         if(response.status_code==200):
                             respuesta = response.json()['result']

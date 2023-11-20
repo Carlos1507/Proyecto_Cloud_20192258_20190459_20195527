@@ -2,12 +2,15 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import platform, os, uvicorn, json, ast
-from resourceManager import validarRecursosDisponibles
-from vmPlacement import crearSlice
+from resourceManager import validarRecursosDisponibles, consultarRecursosBD, obtenerIDOpenstackProject, actualizarRecursosDisponibles, crearVM_BD
+from vmPlacement import crearSliceBD
 from vmPlacement import modificarSlice
 from modelosBD import *
 from modelosConsultas import *
 import funcionEnviarMail as send
+import slice_creation_openstack as openstackFeatures
+import slice_creation_linux as linuxFeatures
+
 app = FastAPI()
 
 sistema = platform.system()
@@ -140,11 +143,7 @@ async def recursosCrear(recurso: Recursos):
         return {"result":"Error"}
 @app.get("/recursos/listar", tags=["Recursos"])
 async def recursosListar():
-    result = ejecutarConsultaSQL("SELECT * FROM recursos", ())
-    listaRecursos = []
-    for elem in result:
-        print(elem)
-        listaRecursos.append(RecursosBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], elem[6], elem[7]))
+    listaRecursos = consultarRecursosBD()
     return {"result": listaRecursos}
 @app.put("/recursos/actualizar", tags=["Recursos"])
 async def recursosActualizar(recurso: Recursos):
@@ -184,9 +183,10 @@ async def sliceListarPorUsuario(idUser: int):
         for elem in result:
             listaSlices.append(SliceBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], json.loads(elem[6])).to_dict())
         return {"result": listaSlices}
-@app.delete("/slice/eliminar/{idUser}/{idSlice}", tags=["Slices"])
-async def sliceEliminar(idUser: int, idSlice:int):
+@app.delete("/slice/eliminar/{idUser}/{idSlice}/{nombre}", tags=["Slices"])
+async def sliceEliminar(idUser: int, idSlice:int, nombre:str):
     try:
+        openstackFeatures.borrarSlice(nombre)
         ejecutarConsultaSQL("DELETE FROM slice WHERE (idSlice= %s and usuario_idUsuario = %s)", (idSlice,idUser))
         return {"result":"Correcto"}
     except:
@@ -215,21 +215,62 @@ async def disponibleValidar(idUser: int):
     else:
         print("Ocupado")
         return {"result":"Ocupado"}
-@app.post("/validacionRecursos/{idUser}", tags=["RM & VM"])
-async def validacionRecursosDisponibles(idUser: int, request: Request):
+@app.post("/validacionRecursos/{idUser}/{username}/{passwd}/{project_name}", tags=["RM & VM"])
+async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, project_name: str,request: Request):
     global usuarioEnAtencion, disponible
     if(usuarioEnAtencion == idUser):
         data = await request.json()
-        if(validarRecursosDisponibles(data) == True): ## Resource Manager
-            crearSlice(data, idUser)   ## VM Placement
-            disponible = True
-            return {"result": "Slice creado exitosamente"}
+        if(validarRecursosDisponibles(data)): ## YA IMPLEMENTADO
+            plataformaDespliegue = data['AZ']
+            azs = ["Golden Zone", "Silver Zone"]
+            if(plataformaDespliegue == azs[0]):
+                # Crear en Openstack
+                result = openstackFeatures.crearSlice(data,username,passwd,project_name) ## YA IMPLEMENTADO
+            else:
+                # Crear en Linux
+                result = linuxFeatures(data)  ## FALTA IMPLEMENTAR
+            if(result != None):
+                idOpenstack = obtenerIDOpenstackProject(project_name) ## YA IMPLEMENTADO
+                idSliceBD = crearSliceBD(data, idUser, idOpenstack)   ## YA IMPLEMENTADO
+                disponible = True
+                combinarInfoVMs = combinarInfo(result, data, idSliceBD)
+                for vm in combinarInfoVMs:
+                    crearVM_BD(vm) ## YA IMPLEMENTADO
+                actualizarRecursosDisponibles() ## YA IMPLEMENTADO
+                return {"result": "Slice creado exitosamente"}
         else:
             return {"result": "En este momentoNo se cuentan con los suficientes \
                     recursos para generar este slice"}
     else:
         return {"result":"El servidor está atentiendo a otro usuario, espere su turno"}
     
+
+def combinarInfo(result, data, idSliceBD):
+    lista_final = []
+
+    # Iterar sobre las VMs en el JSON
+    for vm_datos in data['vms']:
+        nombre_vm = vm_datos['nombre']
+        
+        # Verificar si la VM está en el diccionario
+        if nombre_vm in result:
+            # Crear un nuevo diccionario combinando información
+            vm_combinada = {
+                "nombre": nombre_vm,
+                "alias": vm_datos["alias"],
+                "ram": vm_datos["ram"],
+                "cpu": vm_datos["cpu"],
+                "disk": vm_datos["disk"],
+                "imagen": vm_datos["imagen"],
+                "idOpenstackImagen": vm_datos["idOpenstackImagen"],
+                "idOpenstackFlavor": vm_datos["idOpenstackFlavor"],
+                "idVM": result[nombre_vm][0],
+                "linkAcceso": result[nombre_vm][1],
+                "idSliceBD": idSliceBD
+        }
+        # Agregar el diccionario a la lista final
+        lista_final.append(vm_combinada)
+    return lista_final
 
 ########################## INICIALIZACIÓN ##############################
 if __name__ == "__main__":

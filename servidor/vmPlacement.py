@@ -7,12 +7,12 @@ else:
     from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
     from resourceManager import execRemoto as execCommand
 
-def crearSlice(data, idUser):
-    print(data['vms'])
+def crearSliceBD(data, idUser, idOpenstack):
     try:
-        result = ejecutarConsultaSQL("INSERT INTO slice (nombre, idOpenstackproject, idLinuxproject, usuario_idUsuario, fecha, sliceJSON) VALUES (%s, %s, %s, %s, %s, %s)",
-                            (data['nombre'], "", "", idUser, data['fecha'], json.dumps(data)))
-        return result
+        ejecutarConsultaSQL("INSERT INTO slice (nombre, idOpenstackproject, idLinuxproject, usuario_idUsuario, fecha, sliceJSON) VALUES (%s, %s, %s, %s, %s, %s)",
+                            (data['nombre'], idOpenstack, "", idUser, data['fecha'], json.dumps(data)))
+        result = ejecutarConsultaSQL("SELECT idSlice from slice where idOpenstackproject=%s ",(idOpenstack,) )
+        return result[0]
     except Exception as e:
         return e
 

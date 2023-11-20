@@ -1,7 +1,6 @@
 from openstack_sdk import password_authentication_with_scoped_authorization
 from openstack_sdk import token_authentication_with_scoped_authorization
 from openstack_sdk import create_network
-from resourceManager import execRemoto
 from openstack_sdk import create_subnet
 from openstack_sdk import create_port
 from openstack_sdk import create_instance
@@ -436,10 +435,3 @@ if __name__ == "__main__":
     #username = 'angelo123'
     #password = 'ah7Z6JQQ'  
     #edit_EliminarEnlace(id1_vm_openst,nombre1_NOalias,id2_vm_openst,nombre2_NOalias,name_project,username,password)
-
-    
-
-
-    
-
-    
