@@ -91,5 +91,9 @@ def send_user_slice(email_subject, receiver_email_address, username, credenciale
     server.quit()
     os.remove(imagen)
 
-def formatear(texto):
-    return texto
+def formatear(credenciales):
+    resultado = ""
+    for vm in credenciales:
+        nombre_o_alias = vm["alias"] if vm["alias"] else vm["nombre"]
+        resultado += f"<p><strong>{nombre_o_alias}:</strong> <a href='{vm['linkAcceso']}' target='_blank'>Acceso</a></p>"
+    return resultado

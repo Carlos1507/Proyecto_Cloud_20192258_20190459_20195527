@@ -68,4 +68,26 @@ class ImagenBD:
             'filename': self.filename, 
             'idglance': self.idglance
         }
-
+class VMBD:
+    def __init__(self, idvm, nombre, idopenstack, pid, flavors_idflavors, imagenes_idImagenes, slice_idSlice, linkAcceso, alias):
+        self.idvm = idvm
+        self.nombre= nombre
+        self.idopenstack=idopenstack
+        self.pid = pid
+        self.flavors_idflavors = flavors_idflavors
+        self.imagenes_idImagenes =imagenes_idImagenes
+        self.slice_idSlice = slice_idSlice
+        self.linkAcceso = linkAcceso
+        self.alias = alias
+    def to_dict(self):
+        return {
+            'idvm': self.idvm,
+            'nombre': self.nombre,
+            'idopenstack': self.idopenstack, 
+            'pid': self.pid,
+            'flavors_idflavors': self.flavors_idflavors,
+            'imagenes_idImagenes': self.imagenes_idImagenes,
+            'slice_idSlice': self.slice_idSlice,
+            'linkAcceso': self.linkAcceso,
+            'alias': self.alias
+        }

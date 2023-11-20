@@ -1,4 +1,4 @@
-import questionary, requests, time, json, datetime
+import questionary, requests, time, json, datetime, os
 from colorama import Fore
 from rich.console import Console
 from rich.table import Table
@@ -10,6 +10,8 @@ from Recursos.generarTopologiaArbol import generarArbol
 from Recursos.generarTopologiaAnillo import generarAnillo
 from Recursos.generarTopologiaMalla import generarMalla
 from Recursos.generarTopologiaLineal import generarLineal
+import Recursos.funcionEnviarMail as mail
+
 console = Console()
 
 def crearSlice(usuarioLog, endpointBase):
@@ -226,6 +228,15 @@ def validarSliceCrearRecursos(usuarioLog, endpointBase, slice):
         print(Fore.GREEN+"Servidor disponible, consultando recursos...")
         if(crearRecursos(usuarioLog, endpointBase, slice)):
             print(Fore.GREEN+"Slice creado exitosamente!")
+            response = requests.get(url = endpointBase+"/vm/listar/"+str(slice['nombre']), 
+                                        headers = {"Content-Type": "application/json"})
+            result = response.json()['result']
+            nombres_graficar = []
+            for vm in slice["vms"]:
+                if not vm["alias"]:
+                    nombres_graficar.append(vm["nombre"])
+            rutaImagen = graficarTopologia("Slice: "+usuarioLog.username+" "+slice['nombre']+" "+slice['fecha'], nombres_graficar, slice['enlaces'], True, slice['nombre'])
+            mail.send_user_slice("[OLIMPUS] Nuevo Slice Creado", usuarioLog.correo, usuarioLog.username, result,rutaImagen)
             exportarConfirm = questionary.confirm("¿Exportar esta topología?").ask()
             if(exportarConfirm):
                 nombreFile = questionary.text("Ingrese el nombre del archivo (sin extensión): ").ask()

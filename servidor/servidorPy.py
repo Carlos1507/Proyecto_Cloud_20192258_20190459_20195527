@@ -190,6 +190,7 @@ async def sliceEliminar(idUser: int, idSlice:int, nombre:str):
     try:
         openstackFeatures.borrarSlice(nombre)        
         idVMsBD = ejecutarConsultaSQL("SELECT idvm from vm where slice_idSlice = %s",(idSlice,))
+        print("Eliminando VMs...")
         for vm in idVMsBD:
             ejecutarConsultaSQL("DELETE FROM vm WHERE idvm= %s", (vm,))
         ejecutarConsultaSQL("DELETE FROM slice WHERE (idSlice= %s and usuario_idUsuario = %s)", (idSlice,idUser))
@@ -258,12 +259,14 @@ async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, 
         return {"result":"El servidor está atentiendo a otro usuario, espere su turno"}
     
 
-@app.post("/prueba/crearVM")
-async def crearVM(request: Request):
-    data = await request.json()
-    crearVM_BD(data)
-    return {"result": "exito"}
-
+@app.get("/vm/listar/{project_name}", tags=["VM"])
+async def vmListar(project_name: str):
+    idSlice = ejecutarConsultaSQL("SELECT idSlice from slice where nombre=%s ",(project_name,))[0]
+    result = ejecutarConsultaSQL("SELECT * FROM vm where slice_idSlice=%s", (idSlice,))
+    listaVMs = []
+    for elem in result:
+        listaVMs.append(VMBD(elem[0], elem[1], elem[2], elem[3], elem[4], elem[5], elem[6], elem[7], elem[8]).to_dict())
+    return {"result": listaVMs}
 
 def combinarInfo(result, data, idSliceBD):
     lista_final = []
