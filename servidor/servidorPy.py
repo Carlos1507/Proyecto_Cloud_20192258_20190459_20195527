@@ -17,10 +17,11 @@ sistema = platform.system()
 if(sistema =="Linux"):
     from funcionConsultasBD import ejecutarSQLlocal as ejecutarConsultaSQL
     from resourceManager import execLocal as execCommand
+    ipOpenstack = "127.0.0.1"
 else:
     from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
     from resourceManager import execRemoto as execCommand
-
+    ipOpenstack = "10.20.10.221"
 disponible = True
 usuarioEnAtencion = 0
 
@@ -188,7 +189,7 @@ async def sliceListarPorUsuario(idUser: int):
 @app.delete("/slice/eliminar/{idUser}/{idSlice}/{nombre}", tags=["Slices"])
 async def sliceEliminar(idUser: int, idSlice:int, nombre:str):
     try:
-        openstackFeatures.borrarSlice(nombre)        
+        openstackFeatures.borrarSlice(nombre, ipOpenstack)        
         idVMsBD = ejecutarConsultaSQL("SELECT idvm from vm where slice_idSlice = %s",(idSlice,))
         print("Eliminando VMs...")
         for vm in idVMsBD:
@@ -232,7 +233,8 @@ async def validacionRecursosDisponibles(idUser: int, username: str, passwd:str, 
             azs = ["Golden Zone", "Silver Zone"]
             if(plataformaDespliegue == azs[0]):
                 # Crear en Openstack
-                result = openstackFeatures.crearSlice(data,username,passwd,project_name) ## YA IMPLEMENTADO
+
+                result = openstackFeatures.crearSlice(data,username,passwd,project_name, ipOpenstack) ## YA IMPLEMENTADO
             else:
                 # Crear en Linux
                 result = linuxFeatures(data)  ## FALTA IMPLEMENTAR
