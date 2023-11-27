@@ -4,15 +4,19 @@ from rich.table import Table
 from colorama import Fore, Style, init
 
 console = Console()
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
 
 def zonasDisponibilidad(usuarioLog, endpointBase):
     print(Fore.CYAN+"Zonas de disponibilidad...")  
     opcion1 = "Plan 1: Silver Zone"
-    opcion2 = "Plan 2: Gold Zone"
+    opcion2 = "Plan 2: Golden Zone"
     choicesAZ = [opcion1, opcion2]
     opcion = questionary.select("Seleccione para visualizar las características del plan", choices=choicesAZ).ask()
     
-    response = requests.get(url = endpointBase+"/recursos/listar", headers = {"Content-Type": "application/json"})
+    response = requests.get(url = endpointBase+"/recursos/listar", headers = headers)
     recursos = response.json()['result']
     
     if(opcion == opcion1):  # SILVER

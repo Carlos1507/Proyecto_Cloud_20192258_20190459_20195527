@@ -1,5 +1,6 @@
 import questionary, requests, json, sys, hashlib
 from colorama import Fore
+
 global usuarioBD
 global usuarioLog
 class User:
@@ -8,6 +9,11 @@ class User:
         self.username = username
         self.correo = correo
         self.rol = rol
+
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
 
 def autorizacion(endpointBase):
     while not (username := questionary.text("Usuario: [digite 0 aquí para salir]").ask().strip()):
@@ -21,7 +27,7 @@ def autorizacion(endpointBase):
         hash_sha512.update(passw.encode("utf-8"))
         print("Validando...")
         response = requests.post(url = endpointBase+"/usuario/validar", 
-                                headers = {"Content-Type": "application/json"}, 
+                                headers = headers, 
                                 data= json.dumps({"username": username, "password": hash_sha512.hexdigest()}))
         if(response.status_code == 200):
             usuarioBD = dict(response.json())

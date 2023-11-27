@@ -11,9 +11,14 @@ from datetime import datetime
 G = nx.Graph()
 console = Console()
 
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
+
 def gestionarSlicesUsuario(usuario, endpointBase):
     response = requests.get(url = endpointBase+"/slice/listarPorUsuario/"+str(usuario.idUser), 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     if(response.status_code == 200):
         slices = response.json()['result']
 
@@ -53,11 +58,12 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                             break
                     confirmation = questionary.confirm("¿Está seguro que desea eliminar este slice?\nEsta acción no es reversible").ask()
                     if(confirmation):
+                        print(Fore.YELLOW+"Eliminando slice...")
                         response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(usuario.idUser)+"/"+str(data['idSlice'])+"/"+str(data['nombre']), 
-                                            headers = {"Content-Type": "application/json"})
+                                            headers = headers)
                         if(response.status_code==200):
                             respuesta = response.json()['result']
-                            if(respuesta == "Eliminado con éxito"):
+                            if(respuesta == "Correcto"):
                                 print(Fore.RED+"Slice eliminado")
                     else:
                         return
@@ -237,11 +243,11 @@ def agregarEnlace(datos):
 
 def agregarVM(datos, endpointBase):
     responseFlavor = requests.get(url = endpointBase+"/flavors/listar", 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     flavours = responseFlavor.json()['result']
     
     responseImagenes = requests.get(url = endpointBase+"/imagenes/listar", 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     imagenes = responseImagenes.json()['result']
     alMenosUnaVez = 0
 

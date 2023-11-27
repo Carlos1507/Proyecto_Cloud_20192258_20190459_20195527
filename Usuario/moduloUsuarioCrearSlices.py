@@ -14,6 +14,11 @@ import Recursos.funcionEnviarMail as mail
 
 console = Console()
 
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
+
 def crearSlice(usuarioLog, endpointBase):
     title = "Seleccione un tipo de topología:"
     choicesCrear = ["1. Predeterminado", "2. Personalizado", "3. Importar topología", "**Regresar**"]
@@ -81,14 +86,14 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         if confirmation:
             graficarTopologia(titulo, listaNodos, listaEnlaces)
         response = requests.get(url = endpointBase+"/imagenes/listar", 
-                                        headers = {"Content-Type": "application/json"})
+                                        headers = headers)
         imagenes = response.json()['result']
         imagenesOpciones = [imagen['nombre'] for imagen in imagenes]
         print(Fore.CYAN+"================= IMÁGENES =================")
         imagenChoosedName = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
         response = requests.get(url = endpointBase+"/flavors/listar", 
-                                        headers = {"Content-Type": "application/json"})
+                                        headers = headers)
         flavors = response.json()['result']
         print(Fore.CYAN+"================= FLAVORS =================")
         table = Table(show_header=True, header_style="bold magenta")
@@ -131,7 +136,7 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
 
 def validarDisponibilidadServidor(usuarioLog, endpointBase):
     response = requests.get(url = endpointBase+"/disponible/"+str(usuarioLog.idUser), 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     if(response.status_code == 200):
         respuestaServer = response.json()['result']
         if(respuestaServer == "Disponible"):
@@ -155,18 +160,43 @@ def validarDisponibilidadServidor(usuarioLog, endpointBase):
 
 def crearRecursos(usuarioLog, endpointBase, data):
     passwd = questionary.password("Digite su contraseña para confirmar creación: ").ask()
-    response = requests.post(url = endpointBase+"/validacionRecursos/"+str(usuarioLog.idUser)+"/"+usuarioLog.username+"/"+passwd+"/"+data['nombre'], 
-                                headers = {"Content-Type": "application/json"}, data=json.dumps(data))
-    if(response.status_code == 200):
-        result = response.json()['result']
-        if(result == "Slice creado exitosamente"):
-            return True
-        elif(result == "En este momentoNo se cuentan con los suficientes recursos para generar este slice"):
-            return False
+
+    responseRecursos = requests.post(url=endpointBase+"/validacionRecursos/"+str(usuarioLog.idUser), 
+                                     headers=headers, data=json.dumps(data))
+    if(responseRecursos.status_code==200):
+        resultRecursos = responseRecursos.json()['result']
+        if(resultRecursos=="exito"):
+            print(Fore.GREEN+"Se cuentan con recursos suficiente para crear este slice")
+            print(Fore.GREEN+"Desplegando slice en la zona de disponibilidad elegida...")
+            
+            responseSliceCrear = requests.post(url = endpointBase+"/slice/crear/"+str(usuarioLog.idUser)+"/"+usuarioLog.username+"/"+passwd+"/"+data['nombre'], 
+                                headers = headers, data=json.dumps(data))
+            if(responseSliceCrear.status_code == 200):
+                resultSliceCrear = responseSliceCrear.json()['result']
+                if(resultSliceCrear != None):
+                    print(Fore.GREEN+"Slice creado exitosamente, registrando en Base de datos...")
+                    dataRegistrar = {"result":resultSliceCrear, "data":data}
+                    responseGuardarBD = requests.post(url = endpointBase+"/slice/guardarBD/"+str(usuarioLog.idUser)+"/"+data['nombre'], 
+                                headers = headers, data=json.dumps(dataRegistrar))
+                    if(responseGuardarBD.status_code == 200 and responseGuardarBD.json()['result'] == "exito"):
+                        print(Fore.GREEN+"Slice registrado exitosamente!!")
+                    else:
+                        responseGuardarBD = requests.post(url = endpointBase+"/slice/guardarBD/"+str(usuarioLog.idUser)+"/"+data['nombre'], 
+                                headers = headers, data=json.dumps(dataRegistrar))
+                    print(Fore.YELLOW+"Actualizando recursos...")
+                    requests.get(url=endpointBase+"/recursos/updateDisponibles", headers=headers)
+                    print(Fore.GREEN+"Recursos actualizados con éxito")
+                    return True
+                else:
+                    print(Fore.RED+"Problema al crear el slice en "+data['AZ'])
+                    return False
+            else:
+                print(Fore.RED+"Problema con el servidor")
         else:
-            return False
+            print(Fore.RED+resultRecursos)
     else:
         print(Fore.RED+"Problema con el servidor")
+    
 
 def topologiaPersonalizada(usuarioLog, endpointBase):
     print(Fore.CYAN+"Usted está empezando con la creación de su topología...")
@@ -227,16 +257,19 @@ def validarSliceCrearRecursos(usuarioLog, endpointBase, slice):
     if(validarDisponibilidadServidor(usuarioLog, endpointBase)):
         print(Fore.GREEN+"Servidor disponible, consultando recursos...")
         if(crearRecursos(usuarioLog, endpointBase, slice)):
-            print(Fore.GREEN+"Slice creado exitosamente!")
             response = requests.get(url = endpointBase+"/vm/listar/"+str(slice['nombre']), 
-                                        headers = {"Content-Type": "application/json"})
+                                        headers = headers)
             result = response.json()['result']
             nombres_graficar = []
             for vm in slice["vms"]:
                 if not vm["alias"]:
                     nombres_graficar.append(vm["nombre"])
             rutaImagen = graficarTopologia("Slice: "+usuarioLog.username+" "+slice['nombre']+" "+slice['fecha'], nombres_graficar, slice['enlaces'], True, slice['nombre'])
-            mail.send_user_slice("[OLIMPUS] Nuevo Slice Creado", usuarioLog.correo, usuarioLog.username, result,rutaImagen)
+            print(Fore.GREEN+"Enviando correo con credenciales e imagen...")
+            try:
+                mail.send_user_slice("[OLIMPUS] Nuevo Slice Creado", usuarioLog.correo, usuarioLog.username, result,rutaImagen)
+            except Exception as e:
+                print(f"Error: {e}")
             exportarConfirm = questionary.confirm("¿Exportar esta topología?").ask()
             if(exportarConfirm):
                 nombreFile = questionary.text("Ingrese el nombre del archivo (sin extensión): ").ask()

@@ -4,6 +4,11 @@ import copy
 from rich.console import Console
 from rich.table import Table
 console = Console()
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
+
 class VM:
     def __init__(self, nombre, alias, ram, cpu, disk, imagen, idOpenstackImagen, idOpenstackFlavor):
         self.nombre = nombre
@@ -32,14 +37,14 @@ def agregarVM(endpointBase, listaVMs):
     while not (aliasVM := questionary.text("Ingrese el nombre de la VM:").ask().strip()):
                 print(Fore.YELLOW + "El nombre no debe estar vacío")
     response = requests.get(url = endpointBase+"/imagenes/listar", 
-                                        headers = {"Content-Type": "application/json"})
+                                        headers = headers)
     imagenes = response.json()['result']
     imagenesOpciones = [imagen['nombre'] for imagen in imagenes]
     print(Fore.CYAN+"================= IMÁGENES =================")
     imagenChoosedName = questionary.select("Seleccione una imagen: ", choices=imagenesOpciones).ask()
 
     response = requests.get(url = endpointBase+"/flavors/listar", 
-                                    headers = {"Content-Type": "application/json"})
+                                    headers = headers)
     flavors = response.json()['result']
     
     table = Table(show_header=True, header_style="bold magenta")

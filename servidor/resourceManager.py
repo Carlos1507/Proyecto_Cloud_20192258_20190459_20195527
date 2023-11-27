@@ -10,38 +10,66 @@ else:
 
 
 def validarRecursosDisponibles(data):
-    resultW1 = ejecutarConsultaSQL("SELECT * FROM recursos where worker=%s", ("worker1",))[0]
-    resultW2 = ejecutarConsultaSQL("SELECT * FROM recursos where worker=%s", ("worker2",))[0]
-    worker1 = {"name":resultW1[1], 
-               "ramDispo": int(resultW1[3])- int(resultW2[2]), 
-               "discoDispo": int(resultW1[5])- int(resultW2[4]),
-               "cpuDispo":int(resultW1[7])- int(resultW2[6])}
-    worker2 = {"name":resultW2[1], 
-               "ramDispo": int(resultW2[3])- int(resultW2[2]), 
-               "discoDispo": int(resultW2[5])- int(resultW2[4]),
-               "cpuDispo":int(resultW2[7])- int(resultW2[6])}
-    listaVMs = data["vms"]
+    plataformaDespliegue = data['AZ']
+    azs = ["Golden Zone", "Silver Zone"]
+    if(plataformaDespliegue == azs[0]):
+        # Validar en Openstack
+        resultW1 = ejecutarConsultaSQL("SELECT * FROM recursos where worker=%s", ("worker1",))[0]
+        resultW2 = ejecutarConsultaSQL("SELECT * FROM recursos where worker=%s", ("worker2",))[0]
+        worker1 = {"name":resultW1[1], 
+                "ramDispo": int(resultW1[3])- int(resultW2[2]), 
+                "discoDispo": int(resultW1[5])- int(resultW2[4]),
+                "cpuDispo":int(resultW1[7])- int(resultW2[6])}
+        worker2 = {"name":resultW2[1], 
+                "ramDispo": int(resultW2[3])- int(resultW2[2]), 
+                "discoDispo": int(resultW2[5])- int(resultW2[4]),
+                "cpuDispo":int(resultW2[7])- int(resultW2[6])}
+        listaVMs = data["vms"]
 
-    for vm in listaVMs:
-        validacionWorker1 = (vm['ram'] <= worker1["ramDispo"]) and (vm['cpu'] <= worker1['cpuDispo']) and (vm['disk'] <= worker1['discoDispo'])
-        validacionWorker2 = (vm['ram'] <= worker2["ramDispo"]) and (vm['cpu'] <= worker2['cpuDispo']) and (vm['disk'] <= worker2['discoDispo'])
-        if(validacionWorker1):
-            # El worker1 tiene los recursos para alojar esta VM
-            worker1['ramDispo'] -= vm['ram']
-            worker1['cpuDispo'] -= vm['cpu']
-            worker1["discoDispo"] -= vm['disk']
-        elif(validacionWorker2):
-            # El worker2 tiene los recursos para alojar esta VM
-            worker2['ramDispo'] -= vm['ram']
-            worker2['cpuDispo'] -= vm['cpu']
-            worker2["discoDispo"] -= vm['disk']
-        else:
-            ### Esta VM no pasó ninguna validación y por tanto hay recursos suficientes para crear el slice
-            print("El slice no se puede crear")
-            return False    
-    # Si llega aquí es porque todas las VMs han superado alguna validación y hay recursos suficientes para crearlas
-    print("El slice se puede crear")
-    return True
+        for vm in listaVMs:
+            validacionWorker1 = (vm['ram'] <= worker1["ramDispo"]) and (vm['cpu'] <= worker1['cpuDispo']) and (vm['disk'] <= worker1['discoDispo'])
+            validacionWorker2 = (vm['ram'] <= worker2["ramDispo"]) and (vm['cpu'] <= worker2['cpuDispo']) and (vm['disk'] <= worker2['discoDispo'])
+            if(validacionWorker1):
+                # El worker1 tiene los recursos para alojar esta VM
+                worker1['ramDispo'] -= vm['ram']
+                worker1['cpuDispo'] -= vm['cpu']
+                worker1["discoDispo"] -= vm['disk']
+            elif(validacionWorker2):
+                # El worker2 tiene los recursos para alojar esta VM
+                worker2['ramDispo'] -= vm['ram']
+                worker2['cpuDispo'] -= vm['cpu']
+                worker2["discoDispo"] -= vm['disk']
+            else:
+                ### Esta VM no pasó ninguna validación y por tanto hay recursos suficientes para crear el slice
+                print("El slice no se puede crear")
+                return False    
+        # Si llega aquí es porque todas las VMs han superado alguna validación y hay recursos suficientes para crearlas
+        print("El slice se puede crear")
+        return True
+    else:
+        # Validar en Linux
+        resultW3 = ejecutarConsultaSQL("SELECT * FROM recursos where worker=%s", ("worker3",))[0]
+        worker3 = {"name":resultW3[1], 
+                "ramDispo": int(resultW3[3])- int(resultW3[2]), 
+                "discoDispo": int(resultW3[5])- int(resultW3[4]),
+                "cpuDispo":int(resultW3[7])- int(resultW3[6])}
+        listaVMs = data["vms"]
+
+        for vm in listaVMs:
+            validacionWorker3 = (vm['ram'] <= worker3["ramDispo"]) and (vm['cpu'] <= worker3['cpuDispo']) and (vm['disk'] <= worker3['discoDispo'])
+            if(validacionWorker3):
+                # El worker1 tiene los recursos para alojar esta VM
+                worker3['ramDispo'] -= vm['ram']
+                worker3['cpuDispo'] -= vm['cpu']
+                worker3["discoDispo"] -= vm['disk']
+            else:
+                ### Esta VM no pasó ninguna validación y por tanto hay recursos suficientes para crear el slice
+                print("El slice no se puede crear")
+                return False    
+        # Si llega aquí es porque todas las VMs han superado alguna validación y hay recursos suficientes para crearlas
+        print("El slice se puede crear")
+        return True
+
 
 def consultarRecursosBD():
     result = ejecutarConsultaSQL("SELECT * FROM recursos", ())
