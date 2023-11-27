@@ -10,7 +10,8 @@ import time
 from modelosConsultas import *
 import funcionEnviarMail as send
 import slice_creation_openstack as openstackFeatures
-import slice_creation_linux as linuxFeatures
+import slice_creation_linux as linuxCreate
+import slice_borrar_linux as linuxDelete
 
 app = FastAPI()
 expected_identifier = "0a8cebdb56fdc2b22590690ebe5a3e2b"
@@ -91,7 +92,8 @@ async def usuarioEliminar(idUser: int, X_APP_IDENTIFIER: str = Header(..., conve
     validarAPPIdentifier(X_APP_IDENTIFIER)
     try:
         username = ejecutarConsultaSQL("SELECT username FROM usuario where idUsuario = %s", (idUser,))[0]
-        execCommand("openstack user delete "+username, "10.20.10.221")
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, execCommand, "openstack user delete "+username, "10.20.10.221")
         ejecutarConsultaSQL("DELETE FROM usuario WHERE idUsuario = %s", (idUser,))
         return {"result":"Correcto"}
     except:
@@ -217,7 +219,15 @@ async def sliceListarPorUsuario(idUser: int, X_APP_IDENTIFIER: str = Header(...,
 async def sliceEliminar(idUser: int, idSlice:int, nombre:str, X_APP_IDENTIFIER: str = Header(..., convert_underscores=False)):
     validarAPPIdentifier(X_APP_IDENTIFIER)
     try:
-        openstackFeatures.borrarSlice(nombre, ipOpenstack)        
+        idSlicePlataforma = ejecutarConsultaSQL("SELECT idOpenstackproject from slice where idSlice=%s", (idSlice,))[0]
+        if(len(idSlicePlataforma[0])>5):
+            # SLICE DE OPENSTACK
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, openstackFeatures.borrarSlice,nombre, ipOpenstack)        
+        else:
+            # SLICE DE LINUX
+            vlanID = ejecutarConsultaSQL("SELECT idLinuxproject from slice where idSlice=%s", (idSlice,))
+            linuxDelete.borrar_slice(vlanID[0])
         idVMsBD = ejecutarConsultaSQL("SELECT idvm from vm where slice_idSlice = %s",(idSlice,))
         print("Eliminando VMs...")
         for vm in idVMsBD:
@@ -230,7 +240,8 @@ async def sliceEliminar(idUser: int, idSlice:int, nombre:str, X_APP_IDENTIFIER: 
 
 @app.delete("/slice/eliminarSliceOpenstack/{name}")
 async def eliminarPorNombreOpenstack(name: str):
-    openstackFeatures.borrarSlice(name, ipOpenstack)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, openstackFeatures.borrarSlice, name, ipOpenstack)
     return {"result":"exito"}
 
 ######################## ENVÍO CORREO ########################
@@ -275,7 +286,6 @@ async def validacionRecursos(idUser: int, request: Request,
     if(usuarioEnAtencion == idUser):
         data = await request.json()
         resultValidacion = validarRecursosDisponibles(data)
-        print(resultValidacion)
         if(resultValidacion): ## YA IMPLEMENTADO
             return {"result":"exito"}
         else:
@@ -297,7 +307,7 @@ async def crearSlice(idUser: int, username: str, passwd:str, project_name: str,r
         result = await loop.run_in_executor(None, openstackFeatures.crearSlice, data,username,passwd,project_name, ipOpenstack) ## YA IMPLEMENTADO
     else:
         # Crear en Linux
-        result = linuxFeatures(data)  ## FALTA IMPLEMENTAR
+        result = linuxCreate(data)  ## FALTA IMPLEMENTAR
     return {"result":result}
 
 
@@ -311,16 +321,33 @@ async def sliceGuardarBD(idUser: int, project_name: str, request: Request,
     datosRecibidos = await request.json()
     result = datosRecibidos['result']
     data = datosRecibidos['data']
-    idOpenstack = obtenerIDOpenstackProject(project_name) ## YA IMPLEMENTADO
-    print("idOpenstack", idOpenstack)
-    idSliceBD = crearSliceBD(data, idUser, idOpenstack)[0]   ## YA IMPLEMENTADO
-    print("idSliceBD", idSliceBD)
-    disponible = True
-    combinarInfoVMs = combinarInfo(result, data, idSliceBD)
-    print("Info combinada", combinarInfoVMs)
-    for vm in combinarInfoVMs:
-        print("Creando...", vm['nombre'])
-        crearVM_BD(vm) ## YA IMPLEMENTADO
+    plataformaDespliegue = data['AZ']
+    azs = ["Golden Zone", "Silver Zone"]
+    if(plataformaDespliegue == azs[0]):
+        # GUARDAR OPENSTACK
+        idOpenstack = obtenerIDOpenstackProject(project_name) ## YA IMPLEMENTADO
+        print("idOpenstack", idOpenstack)
+        idSliceBD = crearSliceBD(data, idUser, idOpenstack, "")[0]   ## YA IMPLEMENTADO
+        print("idSliceBD", idSliceBD)
+        disponible = True
+        combinarInfoVMs = combinarInfo(result, data, idSliceBD)
+        print("Info combinada", combinarInfoVMs)
+        for vm in combinarInfoVMs:
+            print("Creando...", vm['nombre'])
+            crearVM_BD(vm) ## YA IMPLEMENTADO
+    else:
+        # GUARDAR LINUX
+        vlanID = result[0]
+        listaAccesos = result[1]    
+        idSliceBD = crearSliceBD(data, idUser, "",vlanID)[0]
+        print("idSliceBD", idSliceBD)
+        disponible = True
+        combinarInfoVMs = combinarInfo(listaAccesos, data, idSliceBD)
+        print("Info combinada", combinarInfoVMs)
+        for vm in combinarInfoVMs:
+            print("Creando...", vm['nombre'])
+            crearVM_BD(vm) ## YA IMPLEMENTADO
+    
     return {"result":"exito"}
 
 @app.get("/recursos/updateDisponibles")
@@ -332,23 +359,13 @@ async def recursosUpdateDisponibles(X_APP_IDENTIFIER: str = Header(..., convert_
     return {"result": "Recursos actualizados"}
 
 
-
-
-
-
-
-
-
-
-
-
 def combinarInfo(result, data, idSliceBD):
     lista_final = []
 
     # Iterar sobre las VMs en el JSON
     for vm_datos in data['vms']:
         nombre_vm = vm_datos['nombre']
-        
+
         # Verificar si la VM está en el diccionario
         if nombre_vm in result:
             # Crear un nuevo diccionario combinando información
@@ -361,17 +378,23 @@ def combinarInfo(result, data, idSliceBD):
                 "imagen": vm_datos["imagen"],
                 "idOpenstackImagen": vm_datos["idOpenstackImagen"],
                 "idOpenstackFlavor": vm_datos["idOpenstackFlavor"],
-                "idVM": result[nombre_vm][0],
-                "linkAcceso": result[nombre_vm][1],
-                "idSliceBD": idSliceBD
+                "idSliceBD": idSliceBD,
         }
+        if data['AZ'] == "Silver Zone":
+            link_acceso = next((link[1] for link in result if link[0] == nombre_vm), None)
+            vm_combinada["idVM"] = ""
+            vm_combinada["linkAcceso"]= link_acceso
+        else:
+            vm_combinada["idVM"] = result[nombre_vm][0]
+            vm_combinada["linkAcceso"] = result[nombre_vm][1]
+
         # Agregar el diccionario a la lista final
         lista_final.append(vm_combinada)
     return lista_final
 
 ########################## INICIALIZACIÓN ##############################
 if __name__ == "__main__":
-    uvicorn.run("servidorPy:app", host="0.0.0.0", port=8000, 
-                reload=True
-               # ,workers=4
+    uvicorn.run("servidorPy:app", host="0.0.0.0", port=8000,
+               # reload=True
+                workers=4
                 )

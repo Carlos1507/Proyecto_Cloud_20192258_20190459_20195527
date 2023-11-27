@@ -226,10 +226,11 @@ def topologiaPersonalizada(usuarioLog, endpointBase):
             if (len(dispositivosLibres)==0):
                 break
             else:
-                print(Fore.RED+"No ha conectado todos sus dispositivos")
+                print(Fore.YELLOW+"No ha conectado todos sus dispositivos")
                 vms_sin_conectar = dispositivosLibres
-                for vm in vms_sin_conectar:
-                    print(Fore.RED+"Nodo sin conectar: "+vm)
+                for vm_nombre in vms_sin_conectar:
+                    vm_alias = next(vm['alias'] for vm in listaVMs if vm['nombre'] == vm_nombre)
+                    print(Fore.YELLOW + "Nodo sin conectar:", vm_alias)
                 continue
     confirmation = questionary.confirm("¿Desea tener una vista previa?").ask()
     listaVMsNombres = []
