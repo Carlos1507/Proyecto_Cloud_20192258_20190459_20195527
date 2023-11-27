@@ -4,8 +4,14 @@ import json
 from rich.console import Console
 from Recursos.funcionEjecutarComandoRemoto import execRemoto
 from rich.table import Table
-console = Console()
 import Recursos.funcionEjecutarComandoRemoto as ejecutarComando
+
+console = Console()
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
+
 def gestorImagenesGlance(endpointBase, nombre, filename):
     comando = f"glance image-create --name {nombre} --file /home/ubuntu/imagenes/{filename} "+ \
                "--disk-format qcow2 --container-format bare --visibility=public"
@@ -39,7 +45,7 @@ def crearFlavor(endpointBase):
     outputjson = ejecutarComando.execRemoto(comandoNewFlavor, "10.20.10.221")
     jsonresponse = json.loads(outputjson)
     response = requests.post(url = endpointBase+ "/flavors/crear", 
-                                headers = {"Content-Type": "application/json"}, data=json.dumps({"ram_mb":ram_size, "disk_gb":disk_size, "cpus":num_cpus, "nombre":nombreFlavor, "idflavorglance": jsonresponse['id']}))
+                                headers = headers, data=json.dumps({"ram_mb":ram_size, "disk_gb":disk_size, "cpus":num_cpus, "nombre":nombreFlavor, "idflavorglance": jsonresponse['id']}))
     if(response.status_code==200 and response.json()['result']=="Correcto"):
         print(Fore.GREEN+"Imagen agregada exitosamente")
     else:
@@ -47,7 +53,7 @@ def crearFlavor(endpointBase):
 
 def listarFlavors(endpointBase):
     response = requests.get(url = endpointBase+"/flavors/listar", 
-                                    headers = {"Content-Type": "application/json"})
+                                    headers = headers)
     flavors = response.json()['result']
         
     table = Table(show_header=True, header_style="bold magenta")
@@ -68,14 +74,14 @@ def listarFlavors(endpointBase):
 
 def eliminarFlavor(endpointBase):
     response = requests.get(url = endpointBase+"/flavors/listar", 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     if(response.status_code == 200):
         flavors = response.json()['result']
         flavorOpciones = [flavor['nombre'] for flavor in flavors]
         flavorNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=flavorOpciones).ask()
         flavor_seleccionado = [flavor for flavor in flavors if flavor["nombre"] == flavorNombre][0]
         resultadoEliminar = requests.delete(url = endpointBase+"/flavors/eliminar/"+str(flavor_seleccionado['idflavors']), 
-                                         headers = {"Content-Type": "application/json"})
+                                         headers = headers)
         execRemoto("openstack flavor delete "+ flavor_seleccionado['idflavorglance'], "10.20.10.221")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
             print(Fore.GREEN+"Flavor Eliminado Correctamente")

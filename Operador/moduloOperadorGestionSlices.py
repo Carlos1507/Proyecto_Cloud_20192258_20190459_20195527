@@ -3,11 +3,15 @@ from rich.table import Table
 import requests, questionary
 from colorama import Fore, Style, init
 console = Console()
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
 
 def gestionarSlices(usuario, endpointBase):
 
     response = requests.get(url = endpointBase+"/slice/listar", 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     if(response.status_code == 200):
         slices = response.json()['result']
         table = Table(show_header=True, header_style="bold magenta")
@@ -41,8 +45,8 @@ def gestionarSlices(usuario, endpointBase):
                     break
             confirmation = questionary.confirm("¿Está seguro que desea eliminar este slice?\nEsta acción no es reversible").ask()
             if(confirmation):
-                response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(data['slice']['usuario_idUsuario'])+"/"+str(data['slice']['idSlice']), 
-                                    headers = {"Content-Type": "application/json"})
+                response = requests.delete(url = endpointBase+"/slice/eliminar/"+str(data['slice']['usuario_idUsuario'])+"/"+str(data['slice']['idSlice'])+"/"+str(data['slice']['nombre']), 
+                                    headers = headers)
                 if(response.status_code==200):
                     respuesta = response.json()['result']
                     if(respuesta == "Correcto"):

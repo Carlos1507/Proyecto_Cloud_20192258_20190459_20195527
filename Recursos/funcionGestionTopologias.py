@@ -1,8 +1,16 @@
 import networkx as nx
 import os
 import matplotlib.pyplot as plt
+import random
+import string
 
-def graficarTopologia(title, listaVMs, listaEnlaces, flagGuardar=False):
+def generar_id_aleatorio():
+    caracteres = string.ascii_letters + string.digits
+    id_aleatorio = ''.join(random.choice(caracteres) for _ in range(8))
+    return id_aleatorio
+
+
+def graficarTopologia(title, listaVMs, listaEnlaces, flagGuardar=False, nameSlice=None):
     G = nx.Graph()
 
     G.add_nodes_from(listaVMs)
@@ -27,9 +35,12 @@ def graficarTopologia(title, listaVMs, listaEnlaces, flagGuardar=False):
     ax.set_title(title)
     if flagGuardar:
         current_dir = os.getcwd()
-        output_path = os.path.join(current_dir,title,".png")
+        nombreArchivo = "slice"+generar_id_aleatorio()+".png"
+        output_path = os.path.join(current_dir,nombreArchivo)
         plt.savefig(output_path, format='png')
-    plt.show()
+        return nombreArchivo
+    else:
+        plt.show()
 
 def graficarTopologiaImportada(datos):
     fechaCreacion = datos['fecha']

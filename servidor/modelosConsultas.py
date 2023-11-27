@@ -9,8 +9,8 @@ class Usuario(BaseModel):
     Roles_idRoles: int
 class Flavor(BaseModel):
     idflavors: Optional[int] = None
-    ram_mb: float
-    disk_gb: float
+    ram_mb: int
+    disk_gb: int
     cpus: int
     nombre: str
     idflavorglance: Optional[str] = None

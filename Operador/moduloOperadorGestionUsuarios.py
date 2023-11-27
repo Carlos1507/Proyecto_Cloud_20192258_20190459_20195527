@@ -6,6 +6,10 @@ from Recursos.funcionEnviarMail import send_email
 from Recursos import funcionEjecutarComandoRemoto
 
 console = Console()
+headers = {
+            "Content-Type": "application/json",
+            'X_APP_IDENTIFIER': "0a8cebdb56fdc2b22590690ebe5a3e2b",
+           }
 
 def gestionarUsuarios(usuario, endpointBase):
     opcionesSubMenuUsuarios = ["1. Crear Usuario", "2. Visualizar Usuarios", "3. Eliminar Usuario","4. Regresar"]
@@ -24,7 +28,7 @@ def crearUsuario(usuario, endpointBase):
     print("Ingrese los siguiente datos: ")
     username = questionary.text("Username:").ask().strip()
     print("Verificando username disponible ...")
-    response = requests.get(url = endpointBase+ "/usuario/listar", headers = {"Content-Type": "application/json"})
+    response = requests.get(url = endpointBase+ "/usuario/listar", headers = headers)
     if(response.status_code == 200):
         # Validando username no repetido y diferente de vacio
         listUsernames = [elemento[1] for elemento in response.json()['result']]
@@ -64,18 +68,18 @@ def crearUsuario(usuario, endpointBase):
         print(Fore.RED + "Error servidor, vuelva a intentar")
     # Generar contraseña aleatoria
     caracteres = string.ascii_letters + string.digits
-    punctuation_except_quotes = ''.join(c for c in string.punctuation if c not in ['"', "'"])
+    punctuation_except_quotes = ''.join(c for c in string.punctuation if c not in ['"', "'",'?','/','.',','])
     caracteres = string.ascii_letters + string.digits + punctuation_except_quotes
     passwd = ''.join(random.choice(caracteres) for _ in range(8))
     hash_sha512 = hashlib.sha512()
     hash_sha512.update(passwd.encode("utf-8"))
     # Creando usuario
-    respoCrear = requests.post(url = endpointBase+ "/usuario/crear", headers = {"Content-Type": "application/json"}, 
+    respoCrear = requests.post(url = endpointBase+ "/usuario/crear", headers = headers, 
                                data=json.dumps({"username":username, "passwd":hash_sha512.hexdigest(),"email":email,"Roles_idRoles":2}))
     if(respoCrear.status_code == 200):
         print(Fore.GREEN+"Usuario creado exitosamente")
         crearUsuarioEnOpenStack(username, passwd)
-        requests.post(url=endpointBase+"/send_mail", headers={"Content-Type":"application/json"}, 
+        requests.post(url=endpointBase+"/send_mail", headers=headers, 
                       data=json.dumps({"title":"[OLIMPUS] Credenciales de acceso - PUCP", 
                                        "email": email, "username": username, "password": passwd}))
         print(Fore.GREEN+"Correo enviado con credenciales")
@@ -87,7 +91,7 @@ def crearUsuario(usuario, endpointBase):
 
 def eliminarUsuario(usuario, endpointBase):
     response = requests.get(url = endpointBase+"/usuario/listar", 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     if(response.status_code == 200):
         usuarios = response.json()['result']
         print(Fore.CYAN+"* Lista de Usuarios existentes")
@@ -104,7 +108,7 @@ def eliminarUsuario(usuario, endpointBase):
         else:
             idEliminar = [user[0] for user in usuarios if user[1] == usuarioEliminar] [0]
             resultadoEliminar = requests.delete(url = endpointBase+"/usuario/eliminar/"+str(idEliminar), 
-                                            headers = {"Content-Type": "application/json"})
+                                            headers = headers)
             if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
                 print(Fore.GREEN+"Usuario Eliminado Correctamente")
             else:
@@ -116,7 +120,7 @@ def eliminarUsuario(usuario, endpointBase):
 
 def listarAllUsers(usuario, endpointBase):
     response = requests.get(url = endpointBase+ "/usuario/listar", 
-                                headers = {"Content-Type": "application/json"})
+                                headers = headers)
     if(response.status_code == 200):
         usuarios = response.json()['result']
         table = Table(show_header=True, header_style="bold magenta")
