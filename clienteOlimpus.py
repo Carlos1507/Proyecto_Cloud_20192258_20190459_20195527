@@ -2,7 +2,6 @@
 from colorama import Fore, Style, init
 from modulo_autorizacion import autorizacion
 from menuPrincipal import menu
-import asyncio
 from Recursos.funcionEjecutarComandoRemoto import execRemoto
 # Inicializar color
 init(autoreset=True)
@@ -10,7 +9,7 @@ init(autoreset=True)
 global usuarioLog
 
 if __name__ == "__main__":
-    endpointBase = "http://127.0.0.1:8000"
+    endpointBase = "http://10.20.10.221:8000"
     ruta_llave = "venv/headnode"
     gateway_ip = "10.20.10.221"
     while True:

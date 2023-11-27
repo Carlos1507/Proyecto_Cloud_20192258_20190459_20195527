@@ -59,12 +59,12 @@ def eliminarImagen(endpointBase):
                                 headers = headers)
     if(response.status_code == 200):
         imagenes = response.json()['result']
-        imagenesOpciones = [imagen[1] for imagen in imagenes]
-        imagenNombre = questionary.rawselect("Elija una imagen a eliminar: ", choices=imagenesOpciones).ask()
-        idEliminar = [imagen[0] for imagen in imagenes if imagen[1] == imagenNombre] [0]
-        resultadoEliminar = requests.delete(url = endpointBase+"/imagen/eliminar/"+str(idEliminar), 
+        imagenesOpciones = [imagen['nombre'] for imagen in imagenes]
+        imagenChoosedName = questionary.rawselect("Elija una imagen a eliminar: ", choices=imagenesOpciones).ask()
+        imagen_seleccionado = [imagen for imagen in imagenes if imagen["nombre"] == imagenChoosedName][0]
+        resultadoEliminar = requests.delete(url = endpointBase+"/imagen/eliminar/"+str(imagen_seleccionado['idImagenes']), 
                                          headers = headers)
-        execRemoto("rm imagenes/"+imagenNombre, "10.20.10.221")
+        execRemoto("rm imagenes/"+imagen_seleccionado['filename'], "10.20.10.221")
         if(resultadoEliminar.status_code==200 and resultadoEliminar.json()["result"] == "Correcto"):
             print(Fore.GREEN+"Imagen Eliminado Correctamente")
         else:

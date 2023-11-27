@@ -42,6 +42,14 @@ def importarTopologia(usuarioLog, endpointBase):
             jsonfile = graficarTopologiaImportada(json.load(archivo))
             confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
             if(confirmationCrear):
+                fecha_actual = datetime.datetime.now()
+                opcionesAZ = ["1. Openstack - Golden Zone", "2. Linux - Silver Zone"]
+                plataformaElegida = questionary.select("Seleccione una zona de disponibilidad: ", choices=opcionesAZ).ask()
+                jsonfile['fecha'] = fecha_actual.strftime("%d/%m/%Y")
+                if(plataformaElegida == opcionesAZ[0]):
+                    jsonfile["AZ"] = "Golden Zone"  
+                else:
+                    jsonfile["AZ"] = "Silver Zone"  
                 validarSliceCrearRecursos(usuarioLog, endpointBase, jsonfile)
             else:
                 crearSlice(usuarioLog, endpointBase)
@@ -118,12 +126,13 @@ def topologiaPredeterminada(usuarioLog, endpointBase):
         VMsDetalladas = []
         for vm_name in listaNodos:
             VMsDetalladas.append(recurso.VM(vm_name, "", flavor_seleccionado['ram'], flavor_seleccionado['cpu'], flavor_seleccionado['disk'] , imagen_seleccionado['filename'] ,imagen_seleccionado['idglance'], flavor_seleccionado['idflavorglance']).to_dict())
-        fecha_actual = datetime.datetime.now()
+        
         while not (nombre := questionary.text("Ingrese un nombre para su slice").ask().strip()):
             print(Fore.YELLOW + "Su slice debe tener un nombre")
         
         confirmationCrear = questionary.confirm("¿Desea crear este slice?").ask()
         if(confirmationCrear):
+            fecha_actual = datetime.datetime.now()
             opcionesAZ = ["1. Openstack - Golden Zone", "2. Linux - Silver Zone"]
             plataformaElegida = questionary.select("Seleccione una zona de disponibilidad: ", choices=opcionesAZ).ask()
             if(plataformaElegida == opcionesAZ[0]):
@@ -195,8 +204,7 @@ def crearRecursos(usuarioLog, endpointBase, data):
         else:
             print(Fore.RED+resultRecursos)
     else:
-        print(Fore.RED+"Problema con el servidor")
-    
+        print(Fore.RED+"Problema con el servidor")  
 
 def topologiaPersonalizada(usuarioLog, endpointBase):
     print(Fore.CYAN+"Usted está empezando con la creación de su topología...")
@@ -265,10 +273,16 @@ def validarSliceCrearRecursos(usuarioLog, endpointBase, slice):
             for vm in slice["vms"]:
                 if not vm["alias"]:
                     nombres_graficar.append(vm["nombre"])
-            rutaImagen = graficarTopologia("Slice: "+usuarioLog.username+" "+slice['nombre']+" "+slice['fecha'], nombres_graficar, slice['enlaces'], True, slice['nombre'])
-            print(Fore.GREEN+"Enviando correo con credenciales e imagen...")
+            rutaImagen = graficarTopologia("Slice: "+" "+slice['nombre']+" Fecha: "+slice['fecha'], nombres_graficar, slice['enlaces'], True, slice['nombre'])
+            print(Fore.GREEN+"Enviando correo con credenciales y topología...")
             try:
-                mail.send_user_slice("[OLIMPUS] Nuevo Slice Creado", usuarioLog.correo, usuarioLog.username, result,rutaImagen)
+                plataformaDespliegue = slice['AZ']
+                azs = ["Golden Zone", "Silver Zone"]
+                if(plataformaDespliegue == azs[0]):
+                    # GUARDAR OPENSTACK
+                    mail.send_user_slice("[OLIMPUS] Nuevo Slice Creado", usuarioLog.correo, usuarioLog.username, result,rutaImagen)
+                else:
+                    mail.send_accesos_linux("[OLIMPUS] Nuevo Slice Creado", usuarioLog.correo, usuarioLog.username, result,rutaImagen, "ManualDeAcceso.pdf")
             except Exception as e:
                 print(f"Error: {e}")
             exportarConfirm = questionary.confirm("¿Exportar esta topología?").ask()
@@ -276,7 +290,5 @@ def validarSliceCrearRecursos(usuarioLog, endpointBase, slice):
                 nombreFile = questionary.text("Ingrese el nombre del archivo (sin extensión): ").ask()
                 with open(nombreFile+".json", "w") as json_file:
                     json.dump(slice, json_file)
-        else:
-            print(Fore.RED+"No hay capacidad para alojar este slice")
     else:
         crearSlice(usuarioLog, endpointBase)

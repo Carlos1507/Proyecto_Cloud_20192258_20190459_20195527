@@ -25,8 +25,8 @@ else:
     from funcionConsultasBD import ejecutarSQLRemoto as ejecutarConsultaSQL
     from resourceManager import execRemoto as execCommand
     ipOpenstack = "10.20.10.221"
-disponible = True
-usuarioEnAtencion = 0
+
+global disponible, usuarioEnAtencion
 
 def validarAPPIdentifier(app_identifier):
     if app_identifier != expected_identifier:
@@ -38,13 +38,12 @@ def validarAPPIdentifier(app_identifier):
 
 ######################### GENERALES #############################
 @app.get("/", tags=["Conexión exitosa"])
-async def hello(X_APP_IDENTIFIER: str = Header(..., convert_underscores=False)):
-    validarAPPIdentifier(X_APP_IDENTIFIER)
+async def hello():
     return {"result":"hello world from other node"}
 #@app.get("/", tags=["Conexión exitosa"])
 #async def hello():
 #    return {"result":"hello world from other node"}
-#@app.get("/log", tags=["Log"])
+@app.get("/log", tags=["Log"])
 async def log():
     try:
         filename = "salida.log"
@@ -379,17 +378,17 @@ def combinarInfo(result, data, idSliceBD):
                 "idOpenstackImagen": vm_datos["idOpenstackImagen"],
                 "idOpenstackFlavor": vm_datos["idOpenstackFlavor"],
                 "idSliceBD": idSliceBD,
-        }
-        if data['AZ'] == "Silver Zone":
-            link_acceso = next((link[1] for link in result if link[0] == nombre_vm), None)
-            vm_combinada["idVM"] = ""
-            vm_combinada["linkAcceso"]= link_acceso
-        else:
-            vm_combinada["idVM"] = result[nombre_vm][0]
-            vm_combinada["linkAcceso"] = result[nombre_vm][1]
+            }
+            if data['AZ'] == "Silver Zone":
+                link_acceso = next((link[1] for link in result if link[0] == nombre_vm), None)
+                vm_combinada["idVM"] = ""
+                vm_combinada["linkAcceso"]= link_acceso
+            else:
+                vm_combinada["idVM"] = result[nombre_vm][0]
+                vm_combinada["linkAcceso"] = result[nombre_vm][1]
 
-        # Agregar el diccionario a la lista final
-        lista_final.append(vm_combinada)
+            # Agregar el diccionario a la lista final
+            lista_final.append(vm_combinada)
     return lista_final
 
 ########################## INICIALIZACIÓN ##############################

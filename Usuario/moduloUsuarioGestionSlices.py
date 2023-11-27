@@ -64,7 +64,7 @@ def gestionarSlicesUsuario(usuario, endpointBase):
                         if(response.status_code==200):
                             respuesta = response.json()['result']
                             if(respuesta == "Correcto"):
-                                print(Fore.RED+"Slice eliminado")
+                                print(Fore.GREEN+"Slice eliminado")
                     else:
                         return
                 else:
