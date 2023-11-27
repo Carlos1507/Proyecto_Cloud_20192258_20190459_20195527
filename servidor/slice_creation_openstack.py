@@ -8,6 +8,7 @@ from openstack_sdk import create_instance
 import json, os, platform
 import re
 from collections import Counter
+import time
 sistema = platform.system()
 
 if(sistema =="Linux"):
@@ -168,6 +169,24 @@ def crearSlice(datos,username,password,project_name):
         id_flavor = vm_encontrada["idOpenstackFlavor"]
         instance_id = crearVM(token_for_project,alias_o_nombre,id_flavor,id_imagen,instance_networks)
         instance_id_list.append({instance_name: instance_id})
+
+
+    serverList = json.loads(execCommand("openstack server list --long --project "+project_name+" --format json","10.20.10.221"))
+    status_list = [vm["Status"] for vm in serverList]
+    # Inicializar una variable para verificar si todos son "ACTIVE"
+    all_active = all(status == "ACTIVE" for status in status_list)
+    # Bucle while para verificar continuamente si todos son "ACTIVE"
+    while not all_active:
+        # No todos los elementos están en estado ACTIVE
+        # Pausa de 1 segundo
+        time.sleep(1)
+        # Volver a obtener la lista de estados
+        serverList2 = json.loads(execCommand("openstack server list --long --project "+project_name+" --format json","10.20.10.221"))
+        status_list = [vm["Status"] for vm in serverList2]
+        # Verificar si todos son "ACTIVE"
+        all_active = all(status == "ACTIVE" for status in status_list)
+    
+    #Todos los elementos están en estado ACTIVE. Saliendo del bucle
 
     # Generar links de acceso
     instance_link_list = []
@@ -399,14 +418,12 @@ if __name__ == "__main__":
     # JSON de una topología lineal
     datos = {
         'vms': [
-            {'nombre': 'vm1', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
-            {'nombre': 'vm2', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
-            {'nombre': 'vm3', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
-            {'nombre': 'vm4', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'},
-            {'nombre': 'vm5', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '766fa567-86c4-42b4-a3a1-f2316cdb0b7d'}
+            {'nombre': 'vm1', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '12837674-8db8-4835-9ffc-1ed64892c560', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'},
+            {'nombre': 'vm2', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '12837674-8db8-4835-9ffc-1ed64892c560', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'},
+            {'nombre': 'vm3', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '12837674-8db8-4835-9ffc-1ed64892c560', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'}
         ],
-        'enlaces': [('vm1', 'vm2'), ('vm1', 'vm3'), ('vm1', 'vm4'), ('vm1', 'vm5'), ('vm2', 'vm3'), ('vm2', 'vm4'), ('vm2', 'vm5'), ('vm3', 'vm4'), ('vm3', 'vm5'), ('vm4', 'vm5')],
-        'nombre': 'malla1',
+        'enlaces': [('vm1', 'vm2'), ('vm2', 'vm3')],
+        'nombre': 'linea1',
         'fecha': '19/11/2023',
         'AZ': 'Golden Zone'
     }
@@ -416,8 +433,8 @@ if __name__ == "__main__":
     password = 'ah7Z6JQQ'  #pedir a usuario
     project_name = 'prueba'  #pedir a usuario
 
-    #dic_vm_id_link = crearSlice(datos,username,password,project_name)
-    #print(dic_vm_id_link)
+    dic_vm_id_link = crearSlice(datos,username,password,project_name)
+    print(dic_vm_id_link)
     #borrarSlice(project_name)
 
 
@@ -436,6 +453,9 @@ if __name__ == "__main__":
     #username = 'angelo123'
     #password = 'ah7Z6JQQ'  
     #edit_EliminarEnlace(id1_vm_openst,nombre1_NOalias,id2_vm_openst,nombre2_NOalias,name_project,username,password)
+
+    
+
 
     
 
