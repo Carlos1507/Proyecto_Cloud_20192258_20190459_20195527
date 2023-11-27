@@ -108,7 +108,7 @@ def create_network(auth_endpoint, token, name):
     # status_code success = 201
     return r
 
-def create_subnet(auth_endpoint, token, network_id, name, ip_version, cidr):
+def create_subnet(auth_endpoint, token, network_id, name, ip_version, cidr,gateway_ip):
         
     url = auth_endpoint + '/subnets'
     data = \
@@ -117,7 +117,7 @@ def create_subnet(auth_endpoint, token, network_id, name, ip_version, cidr):
                 "network_id": network_id,
                 "name": name,
                 "enable_dhcp": False,
-                "gateway_ip": None,
+                "gateway_ip": gateway_ip,
                 "ip_version": ip_version,
                 "cidr": cidr
             }

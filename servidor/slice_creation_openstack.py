@@ -53,7 +53,7 @@ def obtenerNombresEnlaces(datos, ip):
     nombres_enlaces = ["link" + par for par in pares_numeros]
     return nombres_enlaces
 
-def crearNetwork(token_for_project,network_name,subnet_name,ip_version, cidr, ip):
+def crearNetwork(token_for_project,network_name,subnet_name,ip_version, cidr, ip, gatewayipNet):
     # Datos previos
     gatewayIP = ip
     neutronEndpoint = 'http://' + gatewayIP + ':9696/v2.0'
@@ -64,7 +64,7 @@ def crearNetwork(token_for_project,network_name,subnet_name,ip_version, cidr, ip
         network_id = network_created["network"]["id"]
 
         # Ejecutando Subnetwork Creation
-        resp4 = create_subnet(neutronEndpoint, token_for_project, network_id, subnet_name, ip_version, cidr)
+        resp4 = create_subnet(neutronEndpoint, token_for_project, network_id, subnet_name, ip_version, cidr, gatewayipNet)
         if resp4.status_code == 201:
             #print('SUBNET CREATED SUCCESSFULLY')
             return network_id
@@ -145,7 +145,8 @@ def crearSlice(datos,username,password,project_name, ip):
     for i, enlace in enumerate(nombresEnlaces, start=1):
         network_name = enlace  
         cidr = f'{base_cidr}{i}.0{cidr_suffix}'  # Actualiza la parte de la IP
-        net_id = crearNetwork(token_for_project, network_name, network_name, ip_version, cidr, ip)
+        gatewayipNet = f'{base_cidr}{i}.1'
+        net_id = crearNetwork(token_for_project, network_name, network_name, ip_version, cidr, ip, gatewayipNet)
         net_id_list.append({enlace: net_id})
     
     # Crear puertos
@@ -417,9 +418,9 @@ if __name__ == "__main__":
     # JSON de una topología lineal
     datos = {
         'vms': [
-            {'nombre': 'vm1', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '12837674-8db8-4835-9ffc-1ed64892c560', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'},
-            {'nombre': 'vm2', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '12837674-8db8-4835-9ffc-1ed64892c560', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'},
-            {'nombre': 'vm3', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '12837674-8db8-4835-9ffc-1ed64892c560', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'}
+            {'nombre': 'vm1', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'},
+            {'nombre': 'vm2', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'},
+            {'nombre': 'vm3', 'alias': '', 'ram': 100, 'cpu': 1.0, 'disk': 1, 'imagen': 'cirros-0.6.2-x86_64-disk.img', 'idOpenstackImagen': '474e67b0-5022-43e7-9312-51085691a37e', 'idOpenstackFlavor': '338ec2a6-e2f8-469f-b295-dc53a8548f74'}
         ],
         'enlaces': [('vm1', 'vm2'), ('vm2', 'vm3')],
         'nombre': 'linea1',
@@ -432,9 +433,9 @@ if __name__ == "__main__":
     password = 'ah7Z6JQQ'  #pedir a usuario
     project_name = 'prueba'  #pedir a usuario
 
-    dic_vm_id_link = crearSlice(datos,username,password,project_name)
+    dic_vm_id_link = crearSlice(datos,username,password,project_name,"10.20.10.221")
     print(dic_vm_id_link)
-    #borrarSlice(project_name)
+    #borrarSlice(project_name,"10.20.10.221")
 
 
     ## Editar: Eliminar una VM
